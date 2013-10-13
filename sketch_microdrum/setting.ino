@@ -294,7 +294,9 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       break;
       
       case 0x61:
+#if defined(__AVR__)
         simpleSysex(0x61,Data1,Data2,EEPROM.read((Data1*256)+Data2));
+#endif
       break;
       
       case 0x7F: //RESET

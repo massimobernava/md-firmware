@@ -1,14 +1,21 @@
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta1
+//=>            microDRUM firmware v1.1 beta2
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2012-5-21
+//=> 2013-10-13
 //=====================================================================================
 
+#if defined(__arm__) 
+
+// Arduino Due Board follows
+
+#elif defined(__AVR__) 
 #include <EEPROM.h>
+#endif
+
 #include <math.h>
 #include <LiquidCrystal.h>
 
@@ -20,6 +27,7 @@
 #define VERYVERYFASTADC 1
 //#define FASTADC 1
 
+// defines for setting and clearing register bits
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -27,7 +35,7 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-#define TIMEFUNCTION millis()
+#define TIMEFUNCTION millis() //NOT micros() (thresold error)
 
 //===========PROFILING============
 #define PROFA TimeProfA=micros();
@@ -38,7 +46,13 @@ unsigned long TimeProf=0;
 unsigned long NProf=0;
 //=================================
 
+#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=127) CheckMulti(n1,n2)
+
+#if defined(__arm__) 
+#define fastWrite(_pin_, _state_) digitalWrite(_pin_, _state_);
+#elif defined(__AVR__) 
 #define fastWrite(_pin_, _state_) ( _pin_ < 8 ? (_state_ ?  PORTD |= 1 << _pin_ : PORTD &= ~(1 << _pin_ )) : (_state_ ?  PORTB |= 1 << (_pin_ -8) : PORTB &= ~(1 << (_pin_ -8)  )))
+#endif
 #define fastNoteOn(_channel,_note,_velocity) {Serial.write(0x90 | _channel);Serial.write(_note);Serial.write(_velocity);}
 
 unsigned long Time;
@@ -49,7 +63,7 @@ byte LicenseData[]={0,0};
 //Log
 byte LogPin=0xFF;
 byte LogThresold=0xFF;
-int N=0;
+int N=0;//Unsent log
 bool Diagnostic=false;
 
 //Mode
@@ -72,7 +86,7 @@ byte HHFootThresoldSensor[] = {127,127};
 //===========================
 
 //===Xtalk===================
-byte NXtalkGroup=8;//Numero massimo di gruppi per XTalk
+byte NXtalkGroup=8;//Max number XTalk groups
 byte MaxXtalkGroup[] = {255,255,255,255,255,255,255,255};
 int XtalkThresold[]  = {8,7,6,5,4,3,2,1};
 //===========================
@@ -144,7 +158,7 @@ byte *getChar(int n, byte newChar[])
 //==============================
 void setup()
 {
-  
+
   LicenseData[0]=random(128);
   LicenseData[1]=random(128);
   
@@ -161,19 +175,21 @@ void setup()
   for (int count=0; count<NPin; count++)
     TimeSensor[count]=Time+MaskTimeSensor[count];
 
-  //pinMode(ledPin, OUTPUT);  // Disabled with LCD
   pinMode(7, INPUT);
   pinMode(6, INPUT);
   pinMode(5, INPUT);
   
-  Serial.begin(31250);      // MIDI
+  Serial.begin(115200);    //Raspberry Pi
+  //Serial.begin(31250);      // MIDI
   Serial.flush();
   
+#if defined(__AVR__) 
   analogReference(DEFAULT);
-  //digitalWrite(ledPin,LOW);
+#endif
   
   LoadAllEEPROM();
   
+  #if defined(__AVR__)
   #if FASTADC
   // set prescale to 16
   sbi(ADCSRA,ADPS2) ;
@@ -194,12 +210,14 @@ void setup()
   sbi(ADCSRA,ADPS1) ;
   cbi(ADCSRA,ADPS0) ;
   #endif
-  
+  #endif
   
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
   lcd.print("microDRUM v1.1");
+  
+  fastWrite(3,0);fastWrite(4,0);
   
 }
 

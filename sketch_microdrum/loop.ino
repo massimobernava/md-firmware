@@ -6,7 +6,7 @@ void loop()
 {
   //simpleSysex(0xFF,Mode,0x00,0x00);
   Input();
-  Menu();
+  //Menu();
    
   if(Mode==OffMode)
   {
@@ -21,58 +21,58 @@ void loop()
   //=========================
 
   //0
-  fastWrite(2,0);fastWrite(3,0);fastWrite(4,0);
+  fastWrite(2,0);/*fastWrite(3,0);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,0); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,0); }
   
   //1
   /*fastWrite(2,0);fastWrite(3,0);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,1); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,1); }
 
   //3
   /*fastWrite(2,0);*/fastWrite(3,1);/*fastWrite(4,1);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,3); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,3); }
   
   //2
   /*fastWrite(2,0);fastWrite(3,1);*/fastWrite(4,0);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,2); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,2); }
 
   //6
   fastWrite(2,1);/*fastWrite(3,1);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,6); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,6); }
   
   //7
   /*fastWrite(2,1);fastWrite(3,1);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,7); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,7); }
   
   //5
   /*fastWrite(2,1);*/fastWrite(3,0);/*fastWrite(4,1);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,5); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,5); }
   
   //4
   /*fastWrite(2,1);fastWrite(3,0);*/fastWrite(4,0);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ CheckMulti(Sensor,4); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); /*delayMicroseconds(2);*/ /*Time=TIMEFUNCTION;*/ fastCheckMulti(Sensor,4); }
   
   //===============================
   if (Mode==StandbyMode) return;
   //===============================
 
   Time=TIMEFUNCTION;
-  for(int i=0;i<NPin;i++)
+  for(int i=0;i<NPin;i++)/*YYY*/
   {
     byte TS=TypeSensor[i];
     //===============================
     //        Disabled, HHC
     //===============================
     if(TS==127/*Disabled*/ || TS==2/*HHC*/) continue;
-      
+ 
     //===============================
     //        HH
     //===============================
@@ -98,7 +98,7 @@ void loop()
     //==============SWITCH CHOKE=================
     if((TS==1 /*Switch*/ || TS==5 /*YSwitch*/)&& ZeroCountSensor[i]>MaskTimeSensor[i]/*ChokeTime*/ && ZeroCountSensor[i]!=255) //Choke
     {
-      noteOn(ChannelSensor[i],ChokeNoteSensor[i],127);
+      noteOn(ChannelSensor[i],ChokeNoteSensor[i],127);//127 //In caso di problemi si può impostare i al posto di 127 in modo da sapere quale pin da problemi
       ZeroCountSensor[i]=255;
       
       continue;
@@ -194,6 +194,7 @@ void PlaySensorMIDIMode(int i)
           else
            {
              MaxReadingSensor[i] = -1;
+             //Lo mettiamo in mask
              TimeSensor[i]=Time-ScanTimeSensor[i];
            }   
           return;
@@ -224,7 +225,7 @@ void PlaySensorMIDIMode(int i)
              noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
       }//Mono=======================
     }//Thresold
-              
+               
     MaxReadingSensor[i] = -1;
   }//ScanTime
 }
@@ -235,8 +236,8 @@ void PlaySensorMIDIMode(int i)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void CheckMulti(byte Sensor,byte count)
 {
-  byte MulSensor=count+(Sensor<<3);//OTTIMIZZA *8
-  if(TypeSensor[MulSensor]==127/*Disabled*/) return; //OTTIMIZZA
+  byte MulSensor=count+(Sensor<<3);
+  //if(TypeSensor[MulSensor]==127/*Disabled*/) return;
 
   Time=TIMEFUNCTION;
   int sensorReading = analogRead(Sensor);
@@ -254,7 +255,7 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   if(TypeSensor[MulSensor]==1)
   {
-    if(yn_0==0 && yn_1[MulSensor]==0 && yn_2[MulSensor]==0)
+    if(yn_0==0 && yn_1[MulSensor]==0 && yn_2[MulSensor]==0/*ZZZ*/)  
     {
       if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
     }
@@ -272,7 +273,7 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   else if(TypeSensor[MulSensor]==5)
   {
-    if(yn_0<ThresoldSensor[MulSensor]*4)
+    if(yn_0<ThresoldSensor[MulSensor]*4 )
     {
       if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
     }
@@ -284,7 +285,7 @@ void CheckMulti(byte Sensor,byte count)
         if(min(yn_1[MulSensor],yn_2[MulSensor])>DualThresoldSensor[MulSensor]*4)
           MaxReadingSensor[MulSensor] = ZeroCountSensor[MulSensor];
         else
-          MaxReadingSensor[MulSensor] = 512+ZeroCountSensor[MulSensor]; 
+          MaxReadingSensor[MulSensor] = 512+ZeroCountSensor[MulSensor];
       }
       ZeroCountSensor[MulSensor]=0; 
     }
@@ -294,6 +295,37 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   else
   {
+    /*========================
+    //Old Retrigger Version
+    ==========================
+ 
+    int v_yn_1=yn_1[MulSensor];//Solo per risparmiare l'indirizzamento
+    if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
+    {
+      State=1;//ScanTime
+
+      //Peak
+      if((v_yn_1 > (yn_0+RetriggerSensor[MulSensor]))
+      && (v_yn_1 > (yn_2[MulSensor]+RetriggerSensor[MulSensor]))
+      && (v_yn_1 > MaxReadingSensor[MulSensor]))
+      {
+        MaxReadingSensor[MulSensor] = v_yn_1;
+        
+        if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==255 || MaxReadingSensor[MaxXtalkGroup[XtalkGroupSensor[MulSensor]]]<v_yn_1) //MaxGroup
+          MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=MulSensor;
+      }
+    } 
+    else
+    {
+      State=2;//MaskTime
+      if ((Time-TimeSensor[MulSensor])>MaskTimeSensor[MulSensor])
+      {
+        State=0;//NormalTime
+        if(yn_0 > ThresoldSensor[MulSensor]) TimeSensor[MulSensor]=Time;
+      }
+      //MaxReadingSensor[MulSensor] = -1;
+    }
+    ==============================*/
     if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
     {
       State=1;//ScanTime
@@ -301,6 +333,7 @@ void CheckMulti(byte Sensor,byte count)
       if(yn_0 > MaxReadingSensor[MulSensor])
       {
         MaxReadingSensor[MulSensor] = yn_0;
+        
         MaxRetriggerSensor[MulSensor]=yn_0/(RetriggerSensor[MulSensor]+1);
         
         if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==255 || MaxReadingSensor[MaxXtalkGroup[XtalkGroupSensor[MulSensor]]]<yn_0) //MaxGroup
@@ -351,15 +384,19 @@ void CheckMulti(byte Sensor,byte count)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void CheckHHControl(byte HHControl,byte sensorReading)
 {
+  /*ZZZ*/
+  //Credo si possa sostituire yn_1 con ZeroCountSensor, in questo modo al posto di confrontare con l'ultima
+  //lettura confrontiamo con l'ultimo valore inviato
    if ((Time-TimeSensor[HHControl]) > MaskTimeSensor[HHControl])
     {
-      if(sensorReading>(yn_1[HHControl]+2) || sensorReading<(yn_1[HHControl]-2))//evitiamo l'isteresi
+      if(sensorReading>(yn_1[HHControl]+2) || sensorReading<(yn_1[HHControl]-2))
       {
-        midiCC(ChannelSensor[HHControl],NoteSensor[HHControl],sensorReading);//Inviamo subito il CC
+        midiCC(ChannelSensor[HHControl],NoteSensor[HHControl],sensorReading);
         
         float m=((float)ZeroCountSensor[HHControl]-(float)sensorReading)/((float)TimeSensor[HHControl]-(float)Time);
+
         MaxReadingSensor[HHControl]=m*100;
-              
+               
         ZeroCountSensor[HHControl]=sensorReading;//LastReading
         yn_1[HHControl]=sensorReading;
         

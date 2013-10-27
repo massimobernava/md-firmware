@@ -179,8 +179,8 @@ void setup()
   pinMode(6, INPUT);
   pinMode(5, INPUT);
   
-  Serial.begin(115200);    //Raspberry Pi
-  //Serial.begin(31250);      // MIDI
+  //Serial.begin(115200);    //Raspberry Pi
+  Serial.begin(31250);      // MIDI
   Serial.flush();
   
 #if defined(__AVR__) 

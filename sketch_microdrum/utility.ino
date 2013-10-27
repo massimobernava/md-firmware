@@ -155,3 +155,9 @@ void PlaySensorTOOLMode(int i)
   }//ScanTime
 }
 
+//==============================
+//    SOFTRESET
+//==============================
+void softReset() { asm volatile (" jmp 0"); /*wdt_enable(WDTO_30MS);*/ }
+
+

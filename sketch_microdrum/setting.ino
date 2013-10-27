@@ -302,6 +302,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       case 0x7F: //RESET
         Serial.flush();
         Mode=OffMode;
+        softReset();
         //simpleSysex(0x7F,0x00,0x00,0x00);
       break;
     }

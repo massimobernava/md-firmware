@@ -92,8 +92,8 @@ void loop()
         noteOn(ChannelSensor[i],HHFootNoteSensor[1],127);
         MaxReadingSensor[HHC]=0;
       }
-   }
-   //===============================
+	}
+	//===============================
       
     //==============SWITCH CHOKE=================
     if((TS==1 /*Switch*/ || TS==5 /*YSwitch*/)&& ZeroCountSensor[i]>MaskTimeSensor[i]/*ChokeTime*/ && ZeroCountSensor[i]!=255) //Choke
@@ -411,14 +411,14 @@ void CheckHHControl(byte HHControl,byte sensorReading)
 byte UseCurve(byte Curve,int Value,byte Form)
 {
   int ret=0;
-  if(Curve==0) { ret=((Value*Form)>>3); if(ret>=127) return 127; return ret;}
-  
+ 
   float x=(float)Value;
   float f=((float)Form)/128.0;
 
   switch(Curve)
   {
     //[0-1023]x[0-127]
+    case 0: ret=x*f/8.0; break;;
     case 1: ret=(127.0/(exp(2.0*f)-1))*(exp(f*x/512.0)-1.0);break; //Exp 4*(exp(x/256)-1)
     case 2: ret=log(1.0+(f*x/128.0))*(127.0/log((8*f)+1));break; //Log 64*log(1+x/128)
     case 3: ret=(127.0/(1.0+exp(f*(512.0-x)/64.0)));break; //Sigma

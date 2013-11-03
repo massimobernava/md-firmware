@@ -6,7 +6,9 @@ void loop()
 {
   //simpleSysex(0xFF,Mode,0x00,0x00);
   Input();
-  //Menu();
+  #if MENU
+  Menu();
+  #endif
    
   if(Mode==OffMode)
   {
@@ -14,7 +16,7 @@ void loop()
     CheckLicense();
     delay(100);
     return;
-   }
+  }
 
   //==========UNROLLING======
   //{0, 1, 3, 2, 6, 7, 5, 4}
@@ -242,6 +244,9 @@ void CheckMulti(byte Sensor,byte count)
   Time=TIMEFUNCTION;
   int sensorReading = analogRead(Sensor);
   int yn_0 = sensorReading;
+  
+  if(TypeSensor[MulSensor]==0) //Piezo
+    yn_0 = f[MulSensor].step(sensorReading);
     
   byte State=0;
   
@@ -255,7 +260,7 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   if(TypeSensor[MulSensor]==1)
   {
-    if(yn_0==0 && yn_1[MulSensor]==0 && yn_2[MulSensor]==0/*ZZZ*/)  
+    if(yn_0==0 /*&& yn_1[MulSensor]==0 && yn_2[MulSensor]==0*/ /*ZZZ*/)  
     {
       if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
     }
@@ -282,7 +287,7 @@ void CheckMulti(byte Sensor,byte count)
       if(ZeroCountSensor[MulSensor]!=255 && ZeroCountSensor[MulSensor]>ScanTimeSensor[MulSensor]) //SwitchTime
       {
         /*ZZZ*/
-        if(min(yn_1[MulSensor],yn_2[MulSensor])>DualThresoldSensor[MulSensor]*4)
+        if(/*min(yn_1[MulSensor],yn_2[MulSensor])*/yn_0>DualThresoldSensor[MulSensor]*4)
           MaxReadingSensor[MulSensor] = ZeroCountSensor[MulSensor];
         else
           MaxReadingSensor[MulSensor] = 512+ZeroCountSensor[MulSensor];
@@ -295,37 +300,6 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   else
   {
-    /*========================
-    //Old Retrigger Version
-    ==========================
- 
-    int v_yn_1=yn_1[MulSensor];//Solo per risparmiare l'indirizzamento
-    if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
-    {
-      State=1;//ScanTime
-
-      //Peak
-      if((v_yn_1 > (yn_0+RetriggerSensor[MulSensor]))
-      && (v_yn_1 > (yn_2[MulSensor]+RetriggerSensor[MulSensor]))
-      && (v_yn_1 > MaxReadingSensor[MulSensor]))
-      {
-        MaxReadingSensor[MulSensor] = v_yn_1;
-        
-        if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==255 || MaxReadingSensor[MaxXtalkGroup[XtalkGroupSensor[MulSensor]]]<v_yn_1) //MaxGroup
-          MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=MulSensor;
-      }
-    } 
-    else
-    {
-      State=2;//MaskTime
-      if ((Time-TimeSensor[MulSensor])>MaskTimeSensor[MulSensor])
-      {
-        State=0;//NormalTime
-        if(yn_0 > ThresoldSensor[MulSensor]) TimeSensor[MulSensor]=Time;
-      }
-      //MaxReadingSensor[MulSensor] = -1;
-    }
-    ==============================*/
     if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
     {
       State=1;//ScanTime
@@ -357,7 +331,7 @@ void CheckMulti(byte Sensor,byte count)
         else
         {
           State=0;//NormalTime
-          if(yn_0 > ThresoldSensor[MulSensor]) TimeSensor[MulSensor]=Time;
+          if(yn_0 > ThresoldSensor[MulSensor]) { TimeSensor[MulSensor]=Time; MaxReadingSensor[MulSensor] = yn_0; State=1;}//ScanTime
         }
       }
       //MaxReadingSensor[MulSensor] = -1;
@@ -375,8 +349,8 @@ void CheckMulti(byte Sensor,byte count)
   }
   //====================================
     
-  yn_2[MulSensor] = yn_1[MulSensor];
-  yn_1[MulSensor] = yn_0;
+  //yn_2[MulSensor] = yn_1[MulSensor];
+  //yn_1[MulSensor] = yn_0;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -389,7 +363,7 @@ void CheckHHControl(byte HHControl,byte sensorReading)
   //lettura confrontiamo con l'ultimo valore inviato
    if ((Time-TimeSensor[HHControl]) > MaskTimeSensor[HHControl])
     {
-      if(sensorReading>(yn_1[HHControl]+2) || sensorReading<(yn_1[HHControl]-2))
+      if(sensorReading>(/*yn_1*/ZeroCountSensor[HHControl]+2) || sensorReading<(/*yn_1*/ZeroCountSensor[HHControl]-2))
       {
         midiCC(ChannelSensor[HHControl],NoteSensor[HHControl],sensorReading);
         
@@ -398,7 +372,7 @@ void CheckHHControl(byte HHControl,byte sensorReading)
         MaxReadingSensor[HHControl]=m*100;
                
         ZeroCountSensor[HHControl]=sensorReading;//LastReading
-        yn_1[HHControl]=sensorReading;
+        //yn_1[HHControl]=sensorReading;
         
         TimeSensor[HHControl]=Time;
       }

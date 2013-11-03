@@ -1,26 +1,17 @@
-
+#if MENU
 //==============================
 //    MENU beta
 //==============================
 void Menu()
 {
-   //==========
   int btnOk = digitalRead(6);
-   
-  if (menuEnabled == false)
-  {
-    if(btnOk==HIGH)
-      menuEnabled=true; 
-  } 
-  else
-  {
-    int btnA = digitalRead(7);
-    int btnB = digitalRead(5);
+  int btnA = digitalRead(7);
+  int btnB = digitalRead(5);
     
-    if(btnOk!=btnOk_Last && btnOk==HIGH) { eMenuChange=(eMenuChange+1)%3; Changed=true;}
+  if(btnOk!=btnOk_Last && btnOk==HIGH) { eMenuChange=(eMenuChange+1)%3; Changed=true;}
     
-    if(Changed)
-    {
+  if(Changed)
+  {
       lcd.clear();
       lcd.noAutoscroll();
          
@@ -123,14 +114,14 @@ void Menu()
       }
         
       Changed=false;
-    }
+  }
     
-    btnOk_Last=btnOk;
+  btnOk_Last=btnOk;
     
-    //CONTROL
+  //CONTROL
     
-    if(btnA!=btnA_Last && btnA==HIGH)
-    {
+  if(btnA!=btnA_Last && btnA==HIGH)
+  {
       Changed=true;
       //0=MODE,1=General,2-49=Pin
       if(eMenuChange==0) eMenuValue=(eMenuValue+1)%52;
@@ -178,10 +169,10 @@ void Menu()
           }
         }
       }
-    }
+  }
     
-    if(btnB!=btnB_Last && btnB==HIGH)
-    {
+  if(btnB!=btnB_Last && btnB==HIGH)
+  {
       Changed=true;
       if(eMenuChange==0) eMenuValue=(eMenuValue-1)>-1?eMenuValue-1:51;
       else if(eMenuChange==1)
@@ -229,10 +220,9 @@ void Menu()
           }
         }
       }
-    }
-    btnA_Last=btnA;
-    btnB_Last=btnB;
   }
+  btnA_Last=btnA;
+  btnB_Last=btnB;
 }   
 
 void MenuString(String str,bool sel)
@@ -259,3 +249,4 @@ void MenuString(char* str,int sz,bool sel)
  lcd.print(ret);
 }
 
+#endif

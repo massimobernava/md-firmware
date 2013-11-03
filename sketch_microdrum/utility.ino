@@ -37,11 +37,14 @@ void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
   
   Sysex(0x6E,buf,14);
   
+  
+  #if MENU
   if(menuEnabled && eMenuValue==51)
- {
+  {
    int lev=Y0/16;
    lcd.write(lev);
- }
+  }
+  #endif
 }
 
 //==============================
@@ -160,4 +163,13 @@ void PlaySensorTOOLMode(int i)
 //==============================
 void softReset() { asm volatile (" jmp 0"); /*wdt_enable(WDTO_30MS);*/ }
 
+
+//==============================
+//    FREERAM
+//==============================
+int freeRam () {
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
 

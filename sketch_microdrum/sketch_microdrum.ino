@@ -1,12 +1,21 @@
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta2
+//=>            microDRUM firmware v1.1 beta3
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-10-13
+//=> 2013-11-2
 //=====================================================================================
+
+//========CONFIGURE=============
+#define MENU 0
+#define VERYVERYFASTADC 1
+//#define FASTADC
+#define RASPBERRY 0
+//Da 1 a 9
+#define BUTTERWORTH 6
+//==============================
 
 #if defined(__arm__) 
 
@@ -17,15 +26,15 @@
 #endif
 
 #include <math.h>
+
+#if MENU
 #include <LiquidCrystal.h>
+#endif
 
 #define OffMode     0
 #define StandbyMode 1
 #define MIDIMode    2
 #define ToolMode    3
-
-#define VERYVERYFASTADC 1
-//#define FASTADC 1
 
 // defines for setting and clearing register bits
 #ifndef cbi
@@ -56,6 +65,84 @@ unsigned long NProf=0;
 #define fastNoteOn(_channel,_note,_velocity) {Serial.write(0x90 | _channel);Serial.write(_note);Serial.write(_velocity);}
 
 unsigned long Time;
+
+
+//High pass butterworth filter order=1 alpha1=0.06 
+class filter
+{
+	public:
+		filter()
+		{
+			v[0]=0;
+			v[1]=0;
+		}
+	private:
+		short v[2];
+	public:
+		short step(short x)
+		{
+			v[0] = v[1];
+                        
+                        //0.01
+                        #if BUTTERWORTH==1                        
+       			long tmp = ((((x * 2033254L) >>  1)	//= (   9.6953125291e-1 * x)
+				+ ((v[0] * 1969357L) >> 1)	//+(  0.9390625058*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576 
+                        //0.02
+                        #elif BUTTERWORTH==2
+          		long tmp = ((((x * 1973020L) >>  1)	//= (   9.4080929618e-1 * x)
+          			+ ((v[0] * 1848888L) >> 1)	//+(  0.8816185924*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+
+                        //0.03
+                        #elif BUTTERWORTH==3
+        		long tmp = ((((x * 1916034L) >>  1)	//= (   9.1363597299e-1 * x)
+        			+ ((v[0] * 1734915L) >> 1)	//+(  0.8272719460*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+
+                        //0.04
+                        #elif BUTTERWORTH==4
+                        long tmp = ((((x * 1861935L) >>  1)	//= (   8.8783975552e-1 * x)
+				+ ((v[0] * 1626718L) >> 1)	//+(  0.7756795110*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+
+                        //0.05
+                        #elif BUTTERWORTH==5
+                        long tmp = ((((x * 1810411L) >>  1)	//= (   8.6327126400e-1 * x)
+				+ ((v[0] * 1523670L) >> 1)	//+(  0.7265425280*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+
+                        //0.06
+                        #elif BUTTERWORTH==6
+			long tmp = ((((x * 1761188L) >>  1)	//= (   8.3979964911e-1 * x)
+				+ ((v[0] * 1425223L) >> 1)	//+(  0.6795992982*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+
+                        //0.07
+                        #elif BUTTERWORTH==7
+                        long tmp = ((((x * 1714023L) >>  1)	//= (   8.1730964877e-1 * x)
+				+ ((v[0] * 1330893L) >> 1)	//+(  0.6346192975*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+                        
+                        //0.08
+                        #elif BUTTERWORTH==8
+                        long tmp = ((((x * 1668702L) >>  1)	//= (   7.9569917570e-1 * x)
+				+ ((v[0] * 1240252L) >> 1)	//+(  0.5913983514*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+
+                        //0.09
+                        #elif BUTTERWORTH==9
+                        long tmp = ((((x * 1625036L) >>  1)	//= (   7.7487732610e-1 * x)
+				+ ((v[0] * 1152919L) >> 1)	//+(  0.5497546522*v[0])
+				)+524288) >> 20; // round and downshift fixed point /1048576
+                        #endif
+                        
+			v[1]= (short)tmp;
+			return (short)((
+				 (v[1] - v[0]))); // 2^
+		}
+};
+
 
 //License
 byte LicenseData[]={0,0};
@@ -116,8 +203,10 @@ unsigned long TimeSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0
 int MaxReadingSensor[] = {-1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1};
 int MaxRetriggerSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
 
-int yn_1[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
-int yn_2[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
+//int yn_1[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
+//int yn_2[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
+
+filter f[NPin];
 
 //===========Pearson================== 
 const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x26 , 0x2a , 0x74 , 0x37 , 0x09 , 0x57 , 0x02 , 0x28 , 0x08 , 0x14 , 0x23 , 0x49 , 0x10 , 0x62 , 0x02 , 0x1e , 0x7e , 0x5d , 0x1b , 0x27 , 0x76 , 0x7a , 0x76 , 0x05 , 0x2e };
@@ -126,7 +215,7 @@ const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x2
 //==============================
 //    MENU
 //==============================
-bool menuEnabled=false;
+#if MENU
 int eMenuChange=0;
 int eMenuValue=0;
 int eMenuGeneral=0;
@@ -151,6 +240,7 @@ byte *getChar(int n, byte newChar[])
   return newChar;
 
 }
+#endif
 //==============================
 
 //==============================
@@ -162,10 +252,11 @@ void setup()
   LicenseData[0]=random(128);
   LicenseData[1]=random(128);
   
+  #if MENU
   byte newChar[8];
   for (int i = 0; i < 8; i++)
     lcd.createChar(i, getChar(i, newChar));
-
+  #endif
 
   pinMode(2, OUTPUT);    // s0
   pinMode(3, OUTPUT);    // s1
@@ -175,17 +266,23 @@ void setup()
   for (int count=0; count<NPin; count++)
     TimeSensor[count]=Time+MaskTimeSensor[count];
 
+  #if MENU
   pinMode(7, INPUT);
   pinMode(6, INPUT);
   pinMode(5, INPUT);
+  #endif
   
-  //Serial.begin(115200);    //Raspberry Pi
+  #if RASPBERRY
+  Serial.begin(115200);    //Raspberry Pi
+  #else
   Serial.begin(31250);      // MIDI
+  #endif
+  
   Serial.flush();
   
-#if defined(__AVR__) 
+  #if defined(__AVR__) 
   analogReference(DEFAULT);
-#endif
+  #endif
   
   LoadAllEEPROM();
   
@@ -212,10 +309,12 @@ void setup()
   #endif
   #endif
   
+  #if MENU
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
   lcd.print("microDRUM v1.1");
+  #endif
   
   fastWrite(3,0);fastWrite(4,0);
   

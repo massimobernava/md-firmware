@@ -25,41 +25,41 @@ void loop()
   //0
   fastWrite(2,0);/*fastWrite(3,0);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,0); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,0); }
   //1
   /*fastWrite(2,0);fastWrite(3,0);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,1); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,1); }
 
   //3
   /*fastWrite(2,0);*/fastWrite(3,1);/*fastWrite(4,1);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,3); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,3); }
   
   //2
   /*fastWrite(2,0);fastWrite(3,1);*/fastWrite(4,0);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,2); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,2); }
 
   //6
   fastWrite(2,1);/*fastWrite(3,1);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,6); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,6); }
   
   //7
   /*fastWrite(2,1);fastWrite(3,1);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,7); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,7); }
   
   //5
   /*fastWrite(2,1);*/fastWrite(3,0);/*fastWrite(4,1);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,5); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,5); }
   
   //4
   /*fastWrite(2,1);fastWrite(3,0);*/fastWrite(4,0);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ /*analogRead(Sensor);*/ fastCheckMulti(Sensor,4); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,4); }
 
   //===============================
   if (Mode==StandbyMode) return;
@@ -403,3 +403,4 @@ byte UseCurve(byte Curve,int Value,byte Form)
   if(ret>=127) return 127;//127
   return ret;
 }
+

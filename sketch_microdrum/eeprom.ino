@@ -2,6 +2,41 @@
 //==============================
 //    EEPROM
 //==============================
+
+#if defined(__arm__) 
+/* These two functions help us write to the 24LC256 EEPROM chip */
+#define EEPROM_ADDR 0x50
+void EEPROM_write(unsigned int addr,byte data) {
+  int rdata = data;
+  Wire.beginTransmission(EEPROM_ADDR);
+  Wire.write((int)(addr >> 8));       // MSB
+  Wire.write((int)(addr & 0xFF));     // LSB
+  Wire.write(rdata);
+  Wire.endTransmission();
+  //Serial.print("EEPROM write: addr: ");
+  //Serial.print(addr);
+  //Serial.print(" ");
+  //Serial.println(data);
+  delay(5);
+}
+
+byte EEPROM_read(unsigned int addr) {
+  byte data = 0xFF;
+  Wire.beginTransmission(EEPROM_ADDR);
+  Wire.write((int)(addr >> 8));       // MSB
+  Wire.write((int)(addr & 0xFF));     // LSB
+  Wire.endTransmission();
+  Wire.requestFrom(EEPROM_ADDR,1);
+  if (Wire.available()) data = Wire.read();
+  //Serial.print("EEPROM read: addr: ");
+  //Serial.print(addr);
+  //Serial.print(" ");
+  //Serial.println(data);
+  delay(5);
+  return data;
+}
+#endif
+
 void LoadAllEEPROM()
 {
   #if defined(__AVR__)

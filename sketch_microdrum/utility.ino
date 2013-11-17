@@ -39,7 +39,7 @@ void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
   
   
   #if MENU
-  if(menuEnabled && eMenuValue==51)
+  if(eMenuValue==51)
   {
    int lev=Y0/16;
    lcd.write(lev);
@@ -161,7 +161,12 @@ void PlaySensorTOOLMode(int i)
 //==============================
 //    SOFTRESET
 //==============================
-void softReset() { asm volatile (" jmp 0"); /*wdt_enable(WDTO_30MS);*/ }
+void softReset() {
+  #if defined(__AVR__)
+  asm volatile (" jmp 0");
+  #endif 
+//wdt_enable(WDTO_30MS);
+}
 
 
 //==============================

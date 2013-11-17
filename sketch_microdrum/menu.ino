@@ -1,6 +1,6 @@
 #if MENU
 //==============================
-//    MENU beta
+//    MENU beta      
 //==============================
 void Menu()
 {
@@ -10,7 +10,7 @@ void Menu()
     
   if(btnOk!=btnOk_Last && btnOk==HIGH) { eMenuChange=(eMenuChange+1)%3; Changed=true;}
     
-  if(Changed)
+  if(Changed) 
   {
       lcd.clear();
       lcd.noAutoscroll();

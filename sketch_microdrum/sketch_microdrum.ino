@@ -1,11 +1,11 @@
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta4
+//=>            microDRUM firmware v1.1 beta5
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-11-9
+//=> 2013-11-17
 //=====================================================================================
 
 //========CONFIGURE=============
@@ -19,9 +19,8 @@
 //==============================
 
 #if defined(__arm__) 
-
-// Arduino Due Board follows
-
+/* Use 24LC256 EEPROM to save settings */
+#include <Wire.h>
 #elif defined(__AVR__) 
 #include <EEPROM.h>
 #endif
@@ -105,7 +104,7 @@ bool Diagnostic=false;
 byte Mode=OffMode;
 
 //===General================
-int delayTime=20;
+int delayTime=200;
 byte GeneralXtalk=0;
 
 const byte NPin=48;
@@ -252,6 +251,8 @@ void setup()
   sbi(ADCSRA,ADPS1) ;
   cbi(ADCSRA,ADPS0) ;
   #endif
+  #elif defined(__arm__) 
+  REG_ADC_MR = (REG_ADC_MR & 0xFFF0FFFF) | 0x00030000; //0x00020000;
   #endif
   
   #if MENU

@@ -247,7 +247,7 @@ void CheckMulti(byte Sensor,byte count)
   int yn_0 = sensorReading;
   
   if(TypeSensor[MulSensor]==0) //Piezo
-    yn_0 = F[MulSensor].step(sensorReading);
+    yn_0 = F[MulSensor].step(sensorReading,ChokeNoteSensor[MulSensor]);
 
   byte State=0;
   

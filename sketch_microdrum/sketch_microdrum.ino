@@ -13,7 +13,6 @@
 #define VERYVERYFASTADC 1
 //#define FASTADC
 #define RASPBERRY 0
-#define FALLINGSKY 100
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
 //==============================
@@ -77,11 +76,11 @@ class filter
 	private:
                 short y1;
 	public:
-                short step(short y)
+                short step(short y,short t)
                 {
                   short ret=0;
                   
-                  if((y-y1)>FALLINGSKY)
+                  if((y-y1)>t)
                   {
                     ret = y;
                   }

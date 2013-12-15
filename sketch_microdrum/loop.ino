@@ -26,6 +26,7 @@ void loop()
   fastWrite(2,0);/*fastWrite(3,0);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
   for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,0); }
+  
   //1
   /*fastWrite(2,0);fastWrite(3,0);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
@@ -246,9 +247,6 @@ void CheckMulti(byte Sensor,byte count)
   int sensorReading = analogRead(Sensor);
   int yn_0 = sensorReading;
   
-  if(TypeSensor[MulSensor]==0) //Piezo
-    yn_0 = F[MulSensor].step(sensorReading,ChokeNoteSensor[MulSensor]);
-
   byte State=0;
   
   //===============================
@@ -310,7 +308,7 @@ void CheckMulti(byte Sensor,byte count)
       {
         MaxReadingSensor[MulSensor] = yn_0;
         
-        MaxRetriggerSensor[MulSensor]=yn_0/(RetriggerSensor[MulSensor]+1);
+	MaxRetriggerSensor[MulSensor]=(yn_0 > RetriggerSensor[MulSensor])?(yn_0 - RetriggerSensor[MulSensor]):0;
         
         if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==255 || MaxReadingSensor[MaxXtalkGroup[XtalkGroupSensor[MulSensor]]]<yn_0) //MaxGroup
           MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=MulSensor;
@@ -324,7 +322,7 @@ void CheckMulti(byte Sensor,byte count)
         if((Time-TimeSensor[MulSensor])<2*MaskTimeSensor[MulSensor])
         {
           State=3;//RetriggerTime
-          if(yn_0 > MaxRetriggerSensor[MulSensor])
+          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor[MulSensor])
           {
             State=1;//ScanTime
             TimeSensor[MulSensor]=Time;
@@ -334,7 +332,7 @@ void CheckMulti(byte Sensor,byte count)
         else
         {
           State=0;//NormalTime
-          if(yn_0 > ThresoldSensor[MulSensor]) { TimeSensor[MulSensor]=Time; MaxReadingSensor[MulSensor] = yn_0; State=1;}//ScanTime
+          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor]) { TimeSensor[MulSensor]=Time; MaxReadingSensor[MulSensor] = yn_0; State=1;}//ScanTime
         }
       }
       //else MaxReadingSensor[MulSensor] = -1;
@@ -351,6 +349,8 @@ void CheckMulti(byte Sensor,byte count)
       SendLog(MulSensor,N,sensorReading,yn_0,MaxReadingSensor[MulSensor],State);
   }
   //====================================
+  
+  yn_1[MulSensor]=yn_0;
 
 }
 

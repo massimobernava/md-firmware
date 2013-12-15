@@ -1,18 +1,18 @@
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta5
+//=>            microDRUM firmware v1.1 beta6
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-11-17
+//=> 2013-12-14
 //=====================================================================================
 
 //========CONFIGURE=============
 #define MENU 0
 #define VERYVERYFASTADC 1
 //#define FASTADC
-#define RASPBERRY 0
+#define RASPBERRY 1
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
 //==============================
@@ -65,30 +65,6 @@ unsigned long NProf=0;
 #define fastNoteOn(_channel,_note,_velocity) {Serial.write(0x90 | _channel);Serial.write(_note);Serial.write(_velocity);}
 
 unsigned long Time;
-
-class filter
-{
-	public:
-		filter()
-		{
-                        y1=0;
-		}
-	private:
-                short y1;
-	public:
-                short step(short y,short t)
-                {
-                  short ret=0;
-                  
-                  if((y-y1)>t)
-                  {
-                    ret = y;
-                  }
-
-                  y1=y;
-                  return ret;
-                }
-};
 
 //License
 byte LicenseData[]={0,0};
@@ -149,7 +125,7 @@ unsigned long TimeSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0
 int MaxReadingSensor[] = {-1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1};
 int MaxRetriggerSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
 
-filter F[NPin];
+short yn_1[NPin];
 
 //===========Pearson================== 
 const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x26 , 0x2a , 0x74 , 0x37 , 0x09 , 0x57 , 0x02 , 0x28 , 0x08 , 0x14 , 0x23 , 0x49 , 0x10 , 0x62 , 0x02 , 0x1e , 0x7e , 0x5d , 0x1b , 0x27 , 0x76 , 0x7a , 0x76 , 0x05 , 0x2e };

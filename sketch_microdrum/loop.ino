@@ -10,13 +10,15 @@ void loop()
   Menu();
   #endif
    
-  if(Mode==OffMode)
+  /*if(Mode==OffMode)
   {
     //HANDSHAKE
     CheckLicense();
     delay(100);
+    //Mode=StandbyMode;
+    //NSensor=2;
     return;
-  }
+  }*/
 
   //==========UNROLLING======
   //{0, 1, 3, 2, 6, 7, 5, 4}
@@ -67,7 +69,7 @@ void loop()
   //===============================
 
   //Time=TIMEFUNCTION;
-  for(int i=0;i<(NSensor*8);i++)
+  for(byte i=0;i<(NSensor*8);i++)
   {
     byte TS=TypeSensor[i];
     //===============================
@@ -120,7 +122,7 @@ void loop()
     else
     {
       if (Mode==MIDIMode) PlaySensorMIDIMode(i);
-      else if(Mode==ToolMode && Diagnostic==true) PlaySensorTOOLMode(i);
+      else if(Mode==ToolMode && Diagnostic==true) PlaySensorTOOLMode(i); 
     }
   }
 }
@@ -128,16 +130,17 @@ void loop()
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    PLAYSENSOR MIDIMODE
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-void PlaySensorMIDIMode(int i)
+void PlaySensorMIDIMode(byte i)
 {
   //===============================
   //         Switch
   //===============================
   if(TypeSensor[i]==1)
   {
-    if(DualSensor[i]!=127 && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[i]*4))
+    //DUAL
+    /*if(DualSensor[i]!=127 && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[i]*4))
       noteOn(ChannelSensor[i],DualNoteSensor[i],MaxReadingSensor[i]/8); //Dual
-    else
+    else*/
       noteOn(ChannelSensor[i],NoteSensor[i],MaxReadingSensor[i]/8);
     
     MaxReadingSensor[i] = -1;
@@ -155,7 +158,8 @@ void PlaySensorMIDIMode(int i)
     if(MaxReadingSensor[i] <= 512)
       noteOn(ChannelSensor[i],NoteSensor[i],min(127,MaxReadingSensor[i]*8));
     else
-      noteOn(ChannelSensor[i],DualNoteSensor[i],min(127,(MaxReadingSensor[i]-512)*8));
+      //noteOn(ChannelSensor[i],DualNoteSensor[i],min(127,(MaxReadingSensor[i]-512)*8));//DUAL
+      noteOn(ChannelSensor[i],DualSensor[i],min(127,(MaxReadingSensor[i]-512)*8));
           
     if(DualSensor[i]!=127)//Dual
     {
@@ -170,8 +174,8 @@ void PlaySensorMIDIMode(int i)
   
   //====================================================================
   if ((Time-TimeSensor[i]) >= ScanTimeSensor[i] /*|| TypeSensor[i]==1*/)
-  {         
-    if (MaxReadingSensor[i] > ThresoldSensor[i])
+  {    
+    //if (MaxReadingSensor[i] > ThresoldSensor[i])//ATTENZIONE SECONDO ME E' RIDONDANTE
     {
       //Dual
       if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/ && TypeSensor[i]!=4/*HHs*/)
@@ -179,7 +183,8 @@ void PlaySensorMIDIMode(int i)
         //Piezo-Piezo
         if(TypeSensor[DualSensor[i]]==0) //Piezo-Piezo
         {
-          if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
+          //DUAL
+          /*if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i] ));
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
             noteOn(ChannelSensor[i],NoteSensor[DualSensor[i]],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]] ));
@@ -187,6 +192,8 @@ void PlaySensorMIDIMode(int i)
             noteOn(ChannelSensor[i],DualNoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i] ));
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             noteOn(ChannelSensor[i],DualNoteSensor[DualSensor[i]],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]] ));
+            */
+            //TODO...
         }
         else //Piezo-Switch
         {
@@ -211,8 +218,9 @@ void PlaySensorMIDIMode(int i)
              byte Note=NoteSensor[i];
              byte HHC=DualSensor[i];
              
-             if(ZeroCountSensor[HHC]>DualThresoldSensor[i])
-               Note=DualNoteSensor[i];
+             //if(ZeroCountSensor[HHC]>DualThresoldSensor[i])//DUAL
+             if(ZeroCountSensor[HHC]>HHCTHRESOLD)
+               Note=ChokeNoteSensor[i];
              else if(ZeroCountSensor[HHC]>HHThresoldSensor[3])
                Note=HHNoteSensor[3];
              else if(ZeroCountSensor[HHC]>HHThresoldSensor[2])
@@ -244,21 +252,23 @@ void CheckMulti(byte Sensor,byte count)
   //if(TypeSensor[MulSensor]==127/*Disabled*/) return;
 
   //Time=TIMEFUNCTION;
-  int sensorReading = analogRead(Sensor);
-  int yn_0 = sensorReading;
-  
+  //int sensorReading = analogRead(Sensor); 
+  int yn_0 = -1;
+
   byte State=0;
   
   //===============================
   //        HHC
   //===============================
-  if(TypeSensor[MulSensor]==2/*HHC*/) { CheckHHControl(MulSensor,sensorReading/8); return; }
+  if(TypeSensor[MulSensor]==2/*HHC*/) { CheckHHControl(MulSensor,analogRead(Sensor)/8); return; }
     
   //===============================
   //        Switch
   //===============================
   if(TypeSensor[MulSensor]==1)
   {
+    yn_0 = analogRead(Sensor);
+      
     if(yn_0==0 /*&& yn_1[MulSensor]==0 && yn_2[MulSensor]==0*/ /*ZZZ*/)  
     {
       if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
@@ -277,6 +287,8 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   else if(TypeSensor[MulSensor]==5)
   {
+    yn_0 = analogRead(Sensor);
+    
     if(yn_0<ThresoldSensor[MulSensor]*4 )
     {
       if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
@@ -285,8 +297,9 @@ void CheckMulti(byte Sensor,byte count)
     {
       if(ZeroCountSensor[MulSensor]!=255 && ZeroCountSensor[MulSensor]>ScanTimeSensor[MulSensor]) //SwitchTime
       {
-        /*ZZZ*/
-        if(/*min(yn_1[MulSensor],yn_2[MulSensor])*/yn_0>DualThresoldSensor[MulSensor]*4)
+        ///DUAL
+        //if(yn_0>DualThresoldSensor[MulSensor]*4)
+        if(yn_0>CurveFormSensor[MulSensor]*4)
           MaxReadingSensor[MulSensor] = ZeroCountSensor[MulSensor];
         else
           MaxReadingSensor[MulSensor] = 512+ZeroCountSensor[MulSensor];
@@ -297,13 +310,14 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   //        Piezo, HH
   //===============================
-  else
+  else //ATTENZIONE QUESTO POTREBBE DIVENTARE IL PRIMO IF DATO CHE E' IL PIU' PROBABILE
   {
     Time=TIMEFUNCTION;
     if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
     {
       State=1;//ScanTime
-
+      yn_0 = (analogRead(Sensor)*(int)ChokeNoteSensor[MulSensor])/64;
+      
       if(yn_0 > MaxReadingSensor[MulSensor])
       {
         MaxReadingSensor[MulSensor] = yn_0;
@@ -319,6 +333,7 @@ void CheckMulti(byte Sensor,byte count)
       State=2;//MaskTime
       if ((Time-TimeSensor[MulSensor])>MaskTimeSensor[MulSensor])
       {
+        yn_0 = (analogRead(Sensor)*(int)ChokeNoteSensor[MulSensor])/64;
         if((Time-TimeSensor[MulSensor])<2*MaskTimeSensor[MulSensor])
         {
           State=3;//RetriggerTime
@@ -345,8 +360,8 @@ void CheckMulti(byte Sensor,byte count)
   if(Mode==ToolMode && LogPin==MulSensor)
   {
     N++;
-    if(sensorReading>=(LogThresold*2)) 
-      SendLog(MulSensor,N,sensorReading,yn_0,MaxReadingSensor[MulSensor],State);
+    if(yn_0>=(LogThresold*2)) 
+      SendLog(MulSensor,N,yn_0,MaxRetriggerSensor[MulSensor],MaxReadingSensor[MulSensor],State);
   }
   //====================================
   
@@ -359,9 +374,6 @@ void CheckMulti(byte Sensor,byte count)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void CheckHHControl(byte HHControl,byte sensorReading)
 {
-  /*ZZZ*/
-  //Credo si possa sostituire yn_1 con ZeroCountSensor, in questo modo al posto di confrontare con l'ultima
-  //lettura confrontiamo con l'ultimo valore inviato
    if ((Time-TimeSensor[HHControl]) > MaskTimeSensor[HHControl])
     {
       if(sensorReading>(/*yn_1*/ZeroCountSensor[HHControl]+HHCTHRESOLD) || sensorReading<(/*yn_1*/ZeroCountSensor[HHControl]-HHCTHRESOLD))
@@ -403,4 +415,6 @@ byte UseCurve(byte Curve,int Value,byte Form)
   if(ret>=127) return 127;//127
   return ret;
 }
+
+
 

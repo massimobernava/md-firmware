@@ -39,12 +39,12 @@ void SendPinSetting(int Pin,int Set)
     case 0x0A: //DUAL
       Value=DualSensor[Pin];
       break;
-    case 0x0B: //DUALNOTE
+    /*case 0x0B: //DUALNOTE
       Value=DualNoteSensor[Pin];
       break;
     case 0x0C: //DUALTHRESOLD
       Value=DualThresoldSensor[Pin];
-      break;     
+      break;*/     
     case 0x0D: //TYPE
       Value=TypeSensor[Pin];
       break;
@@ -63,8 +63,8 @@ void SendPinSetting(int Pin,int Set)
       simpleSysex(0x02,Pin,0x08,CurveFormSensor[Pin]);//CURVEFORM
       simpleSysex(0x02,Pin,0x09,ChokeNoteSensor[Pin]);//CHOKE
       simpleSysex(0x02,Pin,0x0A,DualSensor[Pin]);//DUAL
-      simpleSysex(0x02,Pin,0x0B,DualNoteSensor[Pin]);//DUALNOTE
-      simpleSysex(0x02,Pin,0x0C,DualThresoldSensor[Pin]);//DUALTHRESOLD
+      //simpleSysex(0x02,Pin,0x0B,DualNoteSensor[Pin]);//DUALNOTE
+      //simpleSysex(0x02,Pin,0x0C,DualThresoldSensor[Pin]);//DUALTHRESOLD
       simpleSysex(0x02,Pin,0x0D,TypeSensor[Pin]);//TYPE
       simpleSysex(0x02,Pin,0x0E,ChannelSensor[Pin]);//CHANNEL
       return;
@@ -116,7 +116,7 @@ void SendGeneralSetting(int Set)
       break;*/
     
     case 0x02: //NSensor
-      Value=MaxNSensor;
+      Value=NSensor;
       break;
     
     case 0x03: //GeneralXtalk
@@ -126,7 +126,7 @@ void SendGeneralSetting(int Set)
      case 0x7F://All 
        simpleSysex(0x02,0x7E,0x00,(byte)(delayTime/2));//Delay
        //simpleSysex(0x02,0x7E,0x01,(byte)GetHHC());//HHC1
-       simpleSysex(0x02,0x7E,0x02,(byte)MaxNSensor);//NSensor
+       simpleSysex(0x02,0x7E,0x02,(byte)NSensor);//NSensor
        simpleSysex(0x02,0x7E,0x03,(byte)GeneralXtalk);//GeneralXtalk
        return;
      break;
@@ -145,7 +145,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       break;
       
       case 0x01: //SetMode
-        Serial.flush();
+        //Serial.flush();
         switch(Data1)
         {
            case OffMode: Mode=OffMode; break;
@@ -185,7 +185,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
           {
             case 0x00: delayTime=Data3*2; break; //DELAY
             //case 0x01: int h=GetHHC(); if(h!=127) TypeSensor[h]=0; TypeSensor[Data3]=2; /*HHControl1=Data3;*/ break; //HHC1
-            case 0x02: MaxNSensor=Data3; break; //MaxNSensor
+            case 0x02: NSensor=Data3; break; //MaxNSensor
             case 0x03: GeneralXtalk=Data3; break; //GeneralXtalk
           }
         }
@@ -224,8 +224,8 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
             case 0x08: CurveFormSensor[Data1]=Data3; break; //CURVEFORM
             case 0x09: ChokeNoteSensor[Data1]=Data3; break; //CHOKE
             case 0x0A: DualSensor[Data1]=Data3; break; //DUAL
-            case 0x0B: DualNoteSensor[Data1]=Data3; break; //DUALNOTE
-            case 0x0C: DualThresoldSensor[Data1]=Data3; break; //DUALTHRESOLD
+            //case 0x0B: DualNoteSensor[Data1]=Data3; break; //DUALNOTE
+            //case 0x0C: DualThresoldSensor[Data1]=Data3; break; //DUALTHRESOLD
             case 0x0D: TypeSensor[Data1]=Data3; break; //TYPE
             case 0x0E: ChannelSensor[Data1]=Data3; break; //CHANNEL
                          
@@ -251,6 +251,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         }
       break;
       case 0x6D:
+      #if PROFILING
         if(Data1==0)
         {
           TimeProf=0;
@@ -260,6 +261,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         {
          SendProfiling(); 
         }
+      #endif
       break;
       case 0x6E:
         LogPin=Data1;
@@ -269,7 +271,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       case 0x6F:
         Diagnostic=(Data1==1);
       break;
-      case 0x60://License
+      /*case 0x60://License
         if(LicenseData[0]==Data1 && LicenseData[1]==Data2)
         {
           if(Data3==PearsonHash(LicenseData,2))
@@ -291,7 +293,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
             //CheckLicense();
           }
         }
-      break;
+      break;*/
       
       case 0x61:
 #if defined(__AVR__)

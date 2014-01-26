@@ -50,6 +50,7 @@ void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
 //==============================
 //    SENDPROFILING
 //==============================
+#if PROFILING
 void SendProfiling()
 {
   byte buf[8];
@@ -66,12 +67,12 @@ void SendProfiling()
   
   Sysex(0x6D,buf,8);
 }
-
+#endif
 
 //==============================
 //    LICENSE
 //==============================
-void CheckLicense()
+/*void CheckLicense()
 {
   //LicenseHash=PearsonHash(Data,2);
   simpleSysex(0x60,LicenseData[0],LicenseData[1],0x00);
@@ -86,12 +87,12 @@ byte PearsonHash(byte* in,byte size)
    h=Permutation[index%32];
  } 
  return h;
-}
+}*/
 
 //==============================
 //    PLAYSENSOR TOOLMODE
 //==============================
-void PlaySensorTOOLMode(int i)
+void PlaySensorTOOLMode(byte i)
 {
   //===============================
   //        Switch
@@ -122,15 +123,15 @@ void PlaySensorTOOLMode(int i)
         //Piezo-Piezo
         if(TypeSensor[DualSensor[i]]==0) //Piezo-Piezo
         {
-          //Suona solo il primo dei due piezo che arriva, il secondo viene inibito
-          if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
+          //DUAL
+          /*if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
             simpleSysex(0x6F,DualSensor[i],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]]),0);
           else if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
             simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
-            simpleSysex(0x6F,DualSensor[i],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]]),0);
+            simpleSysex(0x6F,DualSensor[i],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]]),0);*/
         }
         else //Piezo-Switch
         {
@@ -177,4 +178,5 @@ int freeRam () {
   int v; 
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
+
 

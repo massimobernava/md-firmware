@@ -1,21 +1,31 @@
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta6
+//=>            microDRUM firmware v1.1 beta7
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-12-14
+//=> 2013-01-26
 //=====================================================================================
 
 //========CONFIGURE=============
 #define MENU 0
-#define VERYVERYFASTADC 1
-//#define FASTADC
+#define PROFILING 0
+#define VERYFASTADC 1
 #define RASPBERRY 1
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
 //==============================
+
+//===========PROFILING============
+#if PROFILING
+/*#define PROFA TimeProfA=micros();
+#define PROFB TimeProf+=(micros()-TimeProfA); NProf++;
+unsigned long TimeProfA;
+unsigned long TimeProf=0;
+unsigned long NProf=0;*/
+#endif
+//=================================
 
 #if defined(__arm__) 
 /* Use 24LC256 EEPROM to save settings */
@@ -45,16 +55,7 @@
 
 #define TIMEFUNCTION millis() //NOT micros() (thresold error)
 
-//===========PROFILING============
-#define PROFA TimeProfA=micros();
-#define PROFB TimeProf+=(micros()-TimeProfA); NProf++;
-
-unsigned long TimeProfA;
-unsigned long TimeProf=0;
-unsigned long NProf=0;
-//=================================
-
-#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=127) { CheckMulti(n1,n2); if(MaxReadingSensor[n2+(n1<<3)]>0) { CheckMulti(n1,n2); CheckMulti(n1,n2); }}
+#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=127) { CheckMulti(n1,n2); if(MaxReadingSensor[n2+(n1<<3)]>0) { CheckMulti(n1,n2); CheckMulti(n1,n2); /*CheckMulti(n1,n2);*/}}
 
 #if defined(__arm__) 
 #define fastWrite(_pin_, _state_) digitalWrite(_pin_, _state_);
@@ -67,7 +68,7 @@ unsigned long NProf=0;
 unsigned long Time;
 
 //License
-byte LicenseData[]={0,0};
+//byte LicenseData[]={0,0};
 
 //Log
 byte LogPin=0xFF;
@@ -76,7 +77,7 @@ int N=0;//Unsent log
 bool Diagnostic=false;
 
 //Mode
-byte Mode=OffMode;
+byte Mode=StandbyMode;//OffMode;
 
 //===General================
 int delayTime=200;
@@ -84,7 +85,7 @@ byte GeneralXtalk=0;
 
 const byte NPin=48;
 byte NSensor=2;
-byte MaxNSensor=6;
+//const byte MaxNSensor=6;
 //===========================
 
 //===HiHat==================
@@ -116,8 +117,8 @@ byte TypeSensor[]  = {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,2,0  ,0,0,
 byte ChokeNoteSensor[]   = {127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,78  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127};
 //127=Disabled
 byte DualSensor[]    = {127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127};
-byte DualNoteSensor[]=  {0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0};
-byte DualThresoldSensor[]={0,0,0,0,0,0,0,0                ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0};
+//byte DualNoteSensor[]=  {0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0};
+//byte DualThresoldSensor[]={0,0,0,0,0,0,0,0                ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0};
 byte ChannelSensor[]=     {9,9,9,9,9,9,9,9                ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9};
 
 byte ZeroCountSensor[]  = {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
@@ -125,10 +126,10 @@ unsigned long TimeSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0
 int MaxReadingSensor[] = {-1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1};
 int MaxRetriggerSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
 
-short yn_1[NPin];
+int yn_1[NPin];
 
 //===========Pearson================== 
-const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x26 , 0x2a , 0x74 , 0x37 , 0x09 , 0x57 , 0x02 , 0x28 , 0x08 , 0x14 , 0x23 , 0x49 , 0x10 , 0x62 , 0x02 , 0x1e , 0x7e , 0x5d , 0x1b , 0x27 , 0x76 , 0x7a , 0x76 , 0x05 , 0x2e };
+//const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x26 , 0x2a , 0x74 , 0x37 , 0x09 , 0x57 , 0x02 , 0x28 , 0x08 , 0x14 , 0x23 , 0x49 , 0x10 , 0x62 , 0x02 , 0x1e , 0x7e , 0x5d , 0x1b , 0x27 , 0x76 , 0x7a , 0x76 , 0x05 , 0x2e };
 //====================================
 
 //==============================
@@ -168,8 +169,8 @@ byte *getChar(int n, byte newChar[])
 void setup()
 {
 
-  LicenseData[0]=random(128);
-  LicenseData[1]=random(128);
+  //LicenseData[0]=random(128);
+  //LicenseData[1]=random(128);
   
   #if MENU
   byte newChar[8];
@@ -240,4 +241,5 @@ void setup()
   fastWrite(3,0);fastWrite(4,0);
   
 }
+
 

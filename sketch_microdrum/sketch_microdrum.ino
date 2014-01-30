@@ -84,7 +84,7 @@ unsigned long NProf=0;
 //=================================
 
 //===General================
-const int delayTime=20;
+const int delayTime=50;
 byte GeneralXtalk=0;
 
 const byte NPin=48;

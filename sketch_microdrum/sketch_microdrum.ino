@@ -1,31 +1,23 @@
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta7
+//=>            microDRUM firmware v1.1 beta8
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-01-26
+//=> 2013-01-30
 //=====================================================================================
 
 //========CONFIGURE=============
 #define MENU 0
-#define PROFILING 0
+#define PROF 0
 #define VERYFASTADC 1
-#define RASPBERRY 1
+#define RASPBERRY 0
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
+#define TEST 0
+#define LICENSE 1
 //==============================
-
-//===========PROFILING============
-#if PROFILING
-/*#define PROFA TimeProfA=micros();
-#define PROFB TimeProf+=(micros()-TimeProfA); NProf++;
-unsigned long TimeProfA;
-unsigned long TimeProf=0;
-unsigned long NProf=0;*/
-#endif
-//=================================
 
 #if defined(__arm__) 
 /* Use 24LC256 EEPROM to save settings */
@@ -55,7 +47,7 @@ unsigned long NProf=0;*/
 
 #define TIMEFUNCTION millis() //NOT micros() (thresold error)
 
-#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=127) { CheckMulti(n1,n2); if(MaxReadingSensor[n2+(n1<<3)]>0) { CheckMulti(n1,n2); CheckMulti(n1,n2); /*CheckMulti(n1,n2);*/}}
+#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=127) { CheckMulti(n1,n2); if(MaxReadingSensor[n2+(n1<<3)]>0) { CheckMulti(n1,n2); CheckMulti(n1,n2); CheckMulti(n1,n2);}}
 
 #if defined(__arm__) 
 #define fastWrite(_pin_, _state_) digitalWrite(_pin_, _state_);
@@ -67,8 +59,10 @@ unsigned long NProf=0;*/
 
 unsigned long Time;
 
-//License
-//byte LicenseData[]={0,0};
+#if LICENSE
+byte LicenseData[]={0,0};
+const byte MaxNSensor=6;
+#endif
 
 //Log
 byte LogPin=0xFF;
@@ -77,15 +71,24 @@ int N=0;//Unsent log
 bool Diagnostic=false;
 
 //Mode
-byte Mode=StandbyMode;//OffMode;
+byte Mode=OffMode;//StandbyMode;//
+
+//===========PROFILING============
+#define PROFA TimeProfA=micros();
+#define PROFB TimeProf+=(micros()-TimeProfA); NProf++;
+#if PROF
+unsigned long TimeProfA;
+unsigned long TimeProf=0;
+unsigned long NProf=0;
+#endif
+//=================================
 
 //===General================
-int delayTime=200;
+const int delayTime=20;
 byte GeneralXtalk=0;
 
 const byte NPin=48;
 byte NSensor=2;
-//const byte MaxNSensor=6;
 //===========================
 
 //===HiHat==================
@@ -129,7 +132,9 @@ int MaxRetriggerSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  
 int yn_1[NPin];
 
 //===========Pearson================== 
-//const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x26 , 0x2a , 0x74 , 0x37 , 0x09 , 0x57 , 0x02 , 0x28 , 0x08 , 0x14 , 0x23 , 0x49 , 0x10 , 0x62 , 0x02 , 0x1e , 0x7e , 0x5d , 0x1b , 0x27 , 0x76 , 0x7a , 0x76 , 0x05 , 0x2e };
+#if LICENSE
+const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x26 , 0x2a , 0x74 , 0x37 , 0x09 , 0x57 , 0x02 , 0x28 , 0x08 , 0x14 , 0x23 , 0x49 , 0x10 , 0x62 , 0x02 , 0x1e , 0x7e , 0x5d , 0x1b , 0x27 , 0x76 , 0x7a , 0x76 , 0x05 , 0x2e };
+#endif
 //====================================
 
 //==============================
@@ -171,6 +176,9 @@ void setup()
 
   //LicenseData[0]=random(128);
   //LicenseData[1]=random(128);
+  #if TEST
+    simpleSysex(0x77,0x01,0x01,0x01);
+  #endif
   
   #if MENU
   byte newChar[8];

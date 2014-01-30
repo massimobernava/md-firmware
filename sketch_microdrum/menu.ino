@@ -100,8 +100,8 @@ void Menu()
         else if(eMenuPin==9) MenuString(TypeSensor[eMenuValue-2],4,eMenuChange==2);
         else if(eMenuPin==10) MenuString(ChokeNoteSensor[eMenuValue-2],4,eMenuChange==2);
         else if(eMenuPin==11) MenuString(DualSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==12) MenuString(DualNoteSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==13) MenuString(DualThresoldSensor[eMenuValue-2],4,eMenuChange==2);
+        //else if(eMenuPin==12) MenuString(DualNoteSensor[eMenuValue-2],4,eMenuChange==2);
+        //else if(eMenuPin==13) MenuString(DualThresoldSensor[eMenuValue-2],4,eMenuChange==2);
         else if(eMenuPin==14) MenuString(ChannelSensor[eMenuValue-2],4,eMenuChange==2);
       }
       else if(eMenuValue==50)
@@ -155,8 +155,8 @@ void Menu()
             case 9: TypeSensor[eMenuValue-2]=(TypeSensor[eMenuValue-2]+1)%128; break;//Type
             case 10: ChokeNoteSensor[eMenuValue-2]=(ChokeNoteSensor[eMenuValue-2]+1)%256; break;//ChokeNote
             case 11: DualSensor[eMenuValue-2]=(DualSensor[eMenuValue-2]+1)%256; break;//Dual
-            case 12: DualNoteSensor[eMenuValue-2]=(DualNoteSensor[eMenuValue-2]+1)%256; break;//DualNote
-            case 13: DualThresoldSensor[eMenuValue-2]=(DualThresoldSensor[eMenuValue-2]+1)%256; break;//DualThresold
+            //case 12: DualNoteSensor[eMenuValue-2]=(DualNoteSensor[eMenuValue-2]+1)%256; break;//DualNote
+            //case 13: DualThresoldSensor[eMenuValue-2]=(DualThresoldSensor[eMenuValue-2]+1)%256; break;//DualThresold
             case 14: ChannelSensor[eMenuValue-2]=(ChannelSensor[eMenuValue-2]+1)%256; break;//Channel
           }
         }
@@ -205,8 +205,8 @@ void Menu()
             case 9: TypeSensor[eMenuValue-2]=TypeSensor[eMenuValue-2]-1>-1?TypeSensor[eMenuValue-2]-1:127;break;//Type
             case 10: ChokeNoteSensor[eMenuValue-2]=ChokeNoteSensor[eMenuValue-2]-1>-1?ChokeNoteSensor[eMenuValue-2]-1:255;break;//ChokeNote
             case 11: DualSensor[eMenuValue-2]=DualSensor[eMenuValue-2]-1>-1?DualSensor[eMenuValue-2]-1:255;break;//Dual
-            case 12: DualNoteSensor[eMenuValue-2]=DualNoteSensor[eMenuValue-2]-1>-1?DualNoteSensor[eMenuValue-2]-1:255;break;//DualNote
-            case 13: DualThresoldSensor[eMenuValue-2]=DualThresoldSensor[eMenuValue-2]-1>-1?DualThresoldSensor[eMenuValue-2]-1:255;break;//DualThresold
+            //case 12: DualNoteSensor[eMenuValue-2]=DualNoteSensor[eMenuValue-2]-1>-1?DualNoteSensor[eMenuValue-2]-1:255;break;//DualNote
+            //case 13: DualThresoldSensor[eMenuValue-2]=DualThresoldSensor[eMenuValue-2]-1>-1?DualThresoldSensor[eMenuValue-2]-1:255;break;//DualThresold
             case 14: ChannelSensor[eMenuValue-2]=ChannelSensor[eMenuValue-2]-1>-1?ChannelSensor[eMenuValue-2]-1:255;break;//Channel
           }
         

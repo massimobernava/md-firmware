@@ -50,7 +50,7 @@ void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
 //==============================
 //    SENDPROFILING
 //==============================
-#if PROFILING
+#if PROF
 void SendProfiling()
 {
   byte buf[8];
@@ -72,7 +72,8 @@ void SendProfiling()
 //==============================
 //    LICENSE
 //==============================
-/*void CheckLicense()
+#if LICENSE
+void CheckLicense()
 {
   //LicenseHash=PearsonHash(Data,2);
   simpleSysex(0x60,LicenseData[0],LicenseData[1],0x00);
@@ -87,7 +88,8 @@ byte PearsonHash(byte* in,byte size)
    h=Permutation[index%32];
  } 
  return h;
-}*/
+}
+#endif
 
 //==============================
 //    PLAYSENSOR TOOLMODE

@@ -145,7 +145,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       break;
       
       case 0x01: //SetMode
-        //Serial.flush();
+        Serial.flush();
         switch(Data1)
         {
            case OffMode: Mode=OffMode; break;
@@ -183,7 +183,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         {
           switch(Data2)
           {
-            case 0x00: delayTime=Data3*2; break; //DELAY
+            //case 0x00: delayTime=Data3*2; break; //DELAY
             //case 0x01: int h=GetHHC(); if(h!=127) TypeSensor[h]=0; TypeSensor[Data3]=2; /*HHControl1=Data3;*/ break; //HHC1
             case 0x02: NSensor=Data3; break; //MaxNSensor
             case 0x03: GeneralXtalk=Data3; break; //GeneralXtalk
@@ -251,7 +251,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         }
       break;
       case 0x6D:
-      #if PROFILING
+      #if PROF
         if(Data1==0)
         {
           TimeProf=0;
@@ -271,7 +271,8 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       case 0x6F:
         Diagnostic=(Data1==1);
       break;
-      /*case 0x60://License
+      #if LICENSE
+      case 0x60://License
         if(LicenseData[0]==Data1 && LicenseData[1]==Data2)
         {
           if(Data3==PearsonHash(LicenseData,2))
@@ -293,8 +294,8 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
             //CheckLicense();
           }
         }
-      break;*/
-      
+      break;
+      #endif
       case 0x61:
 #if defined(__AVR__)
         simpleSysex(0x61,Data1,Data2,EEPROM.read((Data1*256)+Data2));
@@ -315,9 +316,17 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
 //==============================
 void Input()
 {
+  #if TEST
+    simpleSysex(0x77,0x02,0x01,0x01);
+  #endif
+  
   //===HANDSHAKE======
   if(Serial.peek()!=0xF0) Serial.read();
   //===HANDSHAKE======
+  
+  #if TEST
+    simpleSysex(0x77,0x02,0x01,0x02);
+  #endif
   
   if (Serial.available() > 6)
   {

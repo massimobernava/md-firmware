@@ -420,7 +420,11 @@ byte UseCurve(byte Curve,int Value,byte Form)
   {
     //[0-1023]x[0-127]
 <<<<<<< HEAD
+<<<<<<< HEAD
     case 0: ret=x*f/4.0; break;;
+=======
+    case 0: ret=x*f/4.0; break;
+>>>>>>> fd6e658953ebb8faeb50dc9f6881a16ae669d533
 =======
     case 0: ret=x*f/4.0; break;
 >>>>>>> fd6e658953ebb8faeb50dc9f6881a16ae669d533

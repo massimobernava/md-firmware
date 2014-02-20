@@ -140,8 +140,6 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
     {
       case 0x00: //AskMode
         simpleSysex(0x00,Mode,0x00,0x00);
-        /*randomSeed(millis());
-        CheckLicense();*/
       break;
       
       case 0x01: //SetMode
@@ -157,14 +155,14 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       break;
       
       case 0x02: //AskSetting: Data1: general, pad ecc... Data2:delay, note, ecc.. Data3:value
-        if(Data1==0x7F)
+        /*if(Data1==0x7F)
         {
           SendGeneralSetting(Data2);
           SendHHSetting(Data2);
           for(int s=0;s<NPin;s++)
             SendPinSetting(s,Data2);
         }
-        else if(Data1==0x7E) //General
+        else*/ if(Data1==0x7E) //General
           SendGeneralSetting(Data2);
         else if(Data1==0x4C) //HH
           SendHHSetting(Data2);
@@ -223,7 +221,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
             case 0x07: XtalkGroupSensor[Data1]=Data3; break; //XTALKGROUP
             case 0x08: CurveFormSensor[Data1]=Data3; break; //CURVEFORM
             case 0x09: ChokeNoteSensor[Data1]=Data3; break; //CHOKE
-            case 0x0A: DualSensor[Data1]=Data3; break; //DUAL
+            //case 0x0A: DualSensor[Data1]=Data3; break; //DUAL
             //case 0x0B: DualNoteSensor[Data1]=Data3; break; //DUALNOTE
             //case 0x0C: DualThresoldSensor[Data1]=Data3; break; //DUALTHRESOLD
             case 0x0D: TypeSensor[Data1]=Data3; break; //TYPE
@@ -321,7 +319,8 @@ void Input()
   #endif
   
   //===HANDSHAKE======
-  if(Serial.peek()!=0xF0) Serial.read();
+  //if(Serial.peek()!=0xF0) Serial.read();
+  while(Serial.peek()>=0 && Serial.peek()!=0xF0) Serial.read();
   //===HANDSHAKE======
   
   #if TEST

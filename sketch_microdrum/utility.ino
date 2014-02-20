@@ -120,12 +120,22 @@ void PlaySensorTOOLMode(byte i)
     if (MaxReadingSensor[i] > ThresoldSensor[i])
     {
       //Dual
-      if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/ && TypeSensor[i]!=4/*HHs*/)
+      if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/)
       {
         //Piezo-Piezo
         if(TypeSensor[DualSensor[i]]==0) //Piezo-Piezo
         {
           //DUAL
+          if(MaxReadingSensor[DualSensor[i]]>MaxReadingSensor[i])
+          {
+            MaxReadingSensor[i]=-1;
+            return;
+          }
+          else
+          {
+            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+            MaxReadingSensor[DualSensor[i]]=-1;  //Dual XTalk
+          }
           /*if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
@@ -135,7 +145,7 @@ void PlaySensorTOOLMode(byte i)
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             simpleSysex(0x6F,DualSensor[i],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]]),0);*/
         }
-        else //Piezo-Switch
+        else if(TypeSensor[DualSensor[i]]==1)//Piezo-Switch
         {
           //Se lo switch è stato attivato questo viene inibito altrimenti suona come un piezo normale
           if(MaxReadingSensor[DualSensor[i]]<0 || ZeroCountSensor[DualSensor[i]]>0)
@@ -150,6 +160,8 @@ void PlaySensorTOOLMode(byte i)
            }   
           return;
         }
+        else
+          simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
       }
       else //Mono========================================
       {

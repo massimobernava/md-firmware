@@ -29,7 +29,7 @@ void loop()
   //==========UNROLLING======
   //{0, 1, 3, 2, 6, 7, 5, 4}
   //=========================
-
+  
   //0
   fastWrite(2,0);/*fastWrite(3,0);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
@@ -78,6 +78,7 @@ void loop()
     simpleSysex(0x77,0x01,0x02,0x02);
   #endif
   
+  
   //Time=TIMEFUNCTION;
   for(byte i=0;i<(NSensor*8);i++)
   {
@@ -122,20 +123,27 @@ void loop()
     if(MaxReadingSensor[i] <0) continue; //OTTIMIZZA
 
     //=============XTALK==================
-    byte MaxXtalkGroup_XtalkGroupSensor_i=MaxXtalkGroup[XtalkGroupSensor[i]];
-    if(MaxXtalkGroup_XtalkGroupSensor_i != 255 && 
-      MaxXtalkGroup_XtalkGroupSensor_i != i && MaxXtalkGroup_XtalkGroupSensor_i != DualSensor[i] && //per i dual Xtalk non vale
-      MaxReadingSensor[MaxXtalkGroup_XtalkGroupSensor_i] > ( MaxReadingSensor[i] * min(XtalkThresold[XtalkSensor[i]],XtalkThresold[GeneralXtalk]) ))
-    {
-      MaxReadingSensor[i]=-1;
-    }
+    if(Mode==ToolMode && Diagnostic==true) PlaySensorTOOLMode(i);
     else
     {
-      if (Mode==MIDIMode) PlaySensorMIDIMode(i);
-      else if(Mode==ToolMode && Diagnostic==true) PlaySensorTOOLMode(i); 
+      if(MaxMultiplexerXtalk[i%8]!=-1 && MaxMultiplexerXtalk[i%8]>(2*MaxReadingSensor[i]))  //Multiplexer XTalk
+      {
+        MaxReadingSensor[i]=-1;
+        continue;
+      }
+      if(MaxXtalkGroup[XtalkGroupSensor[i]]!=-1 && MaxXtalkGroup[XtalkGroupSensor[i]]>(MaxReadingSensor[i]+(64-XtalkSensor[i])*4))
+      {
+        MaxReadingSensor[i]=-1;
+        continue;
+      }  
+      PlaySensorMIDIMode(i);
+
     }
   }
-  
+  //RESET XTALK
+  for(int i=0;i<8;i++)
+    MaxMultiplexerXtalk[i]=MaxXtalkGroup[i]=-1;
+    
   #if TEST
     simpleSysex(0x77,0x01,0x02,0x03);
   #endif
@@ -192,12 +200,22 @@ void PlaySensorMIDIMode(byte i)
     //if (MaxReadingSensor[i] > ThresoldSensor[i])//ATTENZIONE SECONDO ME E' RIDONDANTE
     {
       //Dual
-      if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/ && TypeSensor[i]!=4/*HHs*/)
+      if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/)
       {
         //Piezo-Piezo
         if(TypeSensor[DualSensor[i]]==0) //Piezo-Piezo
         {
           //DUAL
+          if(MaxReadingSensor[DualSensor[i]]>MaxReadingSensor[i])
+          {
+            MaxReadingSensor[i]=-1;
+            return;
+          }
+          else
+          {
+            noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
+            MaxReadingSensor[DualSensor[i]]=-1;  //Dual XTalk
+          }
           /*if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i] ));
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
@@ -207,9 +225,8 @@ void PlaySensorMIDIMode(byte i)
           else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
             noteOn(ChannelSensor[i],DualNoteSensor[DualSensor[i]],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]] ));
             */
-            //TODO...
         }
-        else //Piezo-Switch
+        else if(TypeSensor[DualSensor[i]]==1)//Piezo-Switch
         {
           if(MaxReadingSensor[DualSensor[i]]<0 || ZeroCountSensor[DualSensor[i]]>0)
           {
@@ -224,6 +241,8 @@ void PlaySensorMIDIMode(byte i)
            }   
           return;
         }
+        else
+          noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
       }
       else //Mono========================================
       {
@@ -338,8 +357,11 @@ void CheckMulti(byte Sensor,byte count)
         
 	MaxRetriggerSensor[MulSensor]=(yn_0 > RetriggerSensor[MulSensor])?(yn_0 - RetriggerSensor[MulSensor]):0;
         
-        if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==255 || MaxReadingSensor[MaxXtalkGroup[XtalkGroupSensor[MulSensor]]]<yn_0) //MaxGroup
-          MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=MulSensor;
+        if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==-1 || MaxXtalkGroup[XtalkGroupSensor[MulSensor]]<yn_0) //MaxGroup
+          MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=yn_0;
+          
+        if(MaxMultiplexerXtalk[count]==-1 || MaxMultiplexerXtalk[count]<yn_0)
+           MaxMultiplexerXtalk[count]=yn_0;
       }
     } 
     else
@@ -414,13 +436,12 @@ byte UseCurve(byte Curve,int Value,byte Form)
   int ret=0;
  
   float x=(float)Value;
-  float f=((float)Form)/128.0;
+  float f=((float)Form)/64.0;//[1;127]->[0.;2.0]
 
   switch(Curve)
   {
     //[0-1023]x[0-127]
-
-    case 0: ret=x*f/4.0; break;;
+    case 0: ret=x*f/8.0; break;
     case 1: ret=(127.0/(exp(2.0*f)-1))*(exp(f*x/512.0)-1.0);break; //Exp 4*(exp(x/256)-1)
     case 2: ret=log(1.0+(f*x/128.0))*(127.0/log((8*f)+1));break; //Log 64*log(1+x/128)
     case 3: ret=(127.0/(1.0+exp(f*(512.0-x)/64.0)));break; //Sigma
@@ -430,6 +451,7 @@ byte UseCurve(byte Curve,int Value,byte Form)
   if(ret>=127) return 127;//127
   return ret;
 }
+
 
 
 

@@ -4,10 +4,6 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void loop()
 {
-  #if TEST
-    simpleSysex(0x77,0x01,0x02,0x01);
-  #endif
-  
   //simpleSysex(0xFF,Mode,0x00,0x00);
   Input();
   #if MENU
@@ -74,11 +70,6 @@ void loop()
   if (Mode==StandbyMode) return;
   //===============================
 
-  #if TEST
-    simpleSysex(0x77,0x01,0x02,0x02);
-  #endif
-  
-  
   //Time=TIMEFUNCTION;
   for(byte i=0;i<(NSensor*8);i++)
   {
@@ -143,10 +134,6 @@ void loop()
   //RESET XTALK
   for(int i=0;i<8;i++)
     MaxMultiplexerXtalk[i]=MaxXtalkGroup[i]=-1;
-    
-  #if TEST
-    simpleSysex(0x77,0x01,0x02,0x03);
-  #endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

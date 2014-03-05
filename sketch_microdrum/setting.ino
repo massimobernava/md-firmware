@@ -314,18 +314,9 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
 //==============================
 void Input()
 {
-  #if TEST
-    simpleSysex(0x77,0x02,0x01,0x01);
-  #endif
-  
   //===HANDSHAKE======
-  //if(Serial.peek()!=0xF0) Serial.read();
   while(Serial.peek()>=0 && Serial.peek()!=0xF0) Serial.read();
   //===HANDSHAKE======
-  
-  #if TEST
-    simpleSysex(0x77,0x02,0x01,0x02);
-  #endif
   
   if (Serial.available() > 6)
   {

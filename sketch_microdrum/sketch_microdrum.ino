@@ -5,17 +5,16 @@
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-02-20
+//=> 2013-03-05
 //=====================================================================================
 
 //========CONFIGURE=============
 #define MENU 0
 #define PROF 0
 #define VERYFASTADC 1
-#define RASPBERRY 0
+#define SERIAL 0
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
-#define TEST 0
 #define LICENSE 1
 //==============================
 
@@ -175,11 +174,10 @@ byte *getChar(int n, byte newChar[])
 void setup()
 {
 
-  #if TEST
+  #if LICENSE
   randomSeed(millis());
   LicenseData[0]=random(128);
   LicenseData[1]=random(128);
-  simpleSysex(0x77,0x01,0x01,0x01);
   #endif
   
   #if MENU
@@ -202,8 +200,8 @@ void setup()
   pinMode(5, INPUT);
   #endif
   
-  #if RASPBERRY
-  Serial.begin(115200);    //Raspberry Pi
+  #if SERIAL
+  Serial.begin(115200);    //Serial
   #else
   Serial.begin(31250);      // MIDI
   #endif

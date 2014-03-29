@@ -136,8 +136,8 @@ void Menu()
       {
         if(eMenuValue==1)//General
         {
-          if(eMenuGeneral==0) delayTime=(delayTime+1)%999;//Delay
-          else if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk+1)%8;//XTalk
+          /*if(eMenuGeneral==0) delayTime=(delayTime+1)%999;//Delay
+          else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk+1)%8;//XTalk
         }
         else if(eMenuValue>=2  && eMenuValue<50)//Pin
         {
@@ -154,7 +154,7 @@ void Menu()
             case 8: XtalkGroupSensor[eMenuValue-2]=(XtalkGroupSensor[eMenuValue-2]+1)%256; break;//XTalkGroup
             case 9: TypeSensor[eMenuValue-2]=(TypeSensor[eMenuValue-2]+1)%128; break;//Type
             case 10: ChokeNoteSensor[eMenuValue-2]=(ChokeNoteSensor[eMenuValue-2]+1)%256; break;//ChokeNote
-            case 11: DualSensor[eMenuValue-2]=(DualSensor[eMenuValue-2]+1)%256; break;//Dual
+            //case 11: DualSensor[eMenuValue-2]=(DualSensor[eMenuValue-2]+1)%256; break;//Dual
             //case 12: DualNoteSensor[eMenuValue-2]=(DualNoteSensor[eMenuValue-2]+1)%256; break;//DualNote
             //case 13: DualThresoldSensor[eMenuValue-2]=(DualThresoldSensor[eMenuValue-2]+1)%256; break;//DualThresold
             case 14: ChannelSensor[eMenuValue-2]=(ChannelSensor[eMenuValue-2]+1)%256; break;//Channel
@@ -186,8 +186,8 @@ void Menu()
       {
         if(eMenuValue==1)//General
         {
-          if(eMenuGeneral==0) delayTime=delayTime-1>-1?delayTime-1:999;//Delay
-          else if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk-1>-1)?GeneralXtalk-1:7;//General XTalk
+          /*if(eMenuGeneral==0) delayTime=delayTime-1>-1?delayTime-1:999;//Delay
+          else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk-1>-1)?GeneralXtalk-1:7;//General XTalk
         }
         else if(eMenuValue>=2  && eMenuValue<50)//Pin
         {
@@ -204,7 +204,7 @@ void Menu()
             case 8: XtalkGroupSensor[eMenuValue-2]=XtalkGroupSensor[eMenuValue-2]-1>-1?XtalkGroupSensor[eMenuValue-2]-1:255;break;//XTalkGroup
             case 9: TypeSensor[eMenuValue-2]=TypeSensor[eMenuValue-2]-1>-1?TypeSensor[eMenuValue-2]-1:127;break;//Type
             case 10: ChokeNoteSensor[eMenuValue-2]=ChokeNoteSensor[eMenuValue-2]-1>-1?ChokeNoteSensor[eMenuValue-2]-1:255;break;//ChokeNote
-            case 11: DualSensor[eMenuValue-2]=DualSensor[eMenuValue-2]-1>-1?DualSensor[eMenuValue-2]-1:255;break;//Dual
+            //case 11: DualSensor[eMenuValue-2]=DualSensor[eMenuValue-2]-1>-1?DualSensor[eMenuValue-2]-1:255;break;//Dual
             //case 12: DualNoteSensor[eMenuValue-2]=DualNoteSensor[eMenuValue-2]-1>-1?DualNoteSensor[eMenuValue-2]-1:255;break;//DualNote
             //case 13: DualThresoldSensor[eMenuValue-2]=DualThresoldSensor[eMenuValue-2]-1>-1?DualThresoldSensor[eMenuValue-2]-1:255;break;//DualThresold
             case 14: ChannelSensor[eMenuValue-2]=ChannelSensor[eMenuValue-2]-1>-1?ChannelSensor[eMenuValue-2]-1:255;break;//Channel

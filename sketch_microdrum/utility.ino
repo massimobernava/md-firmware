@@ -75,7 +75,7 @@ void SendProfiling()
 #if LICENSE
 void CheckLicense()
 {
-  //LicenseHash=PearsonHash(Data,2);
+  //byte LicenseHash=PearsonHash(LicenseData,2);
   simpleSysex(0x60,LicenseData[0],LicenseData[1],0x00);
 }
 byte PearsonHash(byte* in,byte size)

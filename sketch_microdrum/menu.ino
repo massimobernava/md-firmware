@@ -1,252 +1,490 @@
 #if MENU
+#define ADD(x) x[eMenuPage-2]=(x[eMenuPage-2]+1)%128;
+#define SUB(x) x[eMenuPage-2]=x[eMenuPage-2]-1>-1?x[eMenuPage-2]-1:127;
+#define SAVE(x) SaveEEPROM(eMenuPage-2,x);
+
+#define S_MODE PSTR("MODE")
+#define S_GENERAL PSTR("General")
+#define S_PIN PSTR("PIN")
+#define S_LOGDIS PSTR("TOOL MODE DISABLED")
+
+
+//#define S_NULL PSTR("---")
+#define S_OFF PSTR("OFF")
+#define S_STANDBY PSTR("Standby")
+#define S_MIDI PSTR("MIDI")
+#define S_TOOL PSTR("Tool")
+#define S_DELAY PSTR("Delay")
+#define S_XTALK PSTR("XTalk")
+
+#define S_HHCT100 PSTR("HHC T100")
+#define S_HHCT75 PSTR("HHC T75")
+#define S_HHCT50 PSTR("HHC T50")
+#define S_HHCT25 PSTR("HHC T25")
+
+#define S_KIT PSTR("Kit")
+#define S_BOXER PSTR("Boxer")
+#define S_FAT_STACKS PSTR("FatStacks")
+#define S_BOMBASTIX PSTR("Bombastix")
+
+#define S_NOTE PSTR("Note")
+#define S_THRESOLD PSTR("Thresold")
+#define S_SCANTIME PSTR("ScanTime")
+#define S_MASKTIME PSTR("MaskTime")
+#define S_RETRIG PSTR("Retrig")
+#define S_CURVE PSTR("Curve")
+#define S_CURVEF PSTR("CurveF")
+#define S_XTALKG PSTR("XTalkG")
+#define S_TYPE PSTR("Type")
+#define S_CKNOTE PSTR("CkNote")
+#define S_GAIN PSTR("Gain")
+#define S_DUAL PSTR("Dual")
+#define S_CHANNEL PSTR("Channel")
+
+#define S_PIEZO PSTR("Piezo")
+#define S_SWITCH PSTR("Switch")
+#define S_HHC PSTR("HHC")
+#define S_HH PSTR("HH")
+#define S_HHS PSTR("HHs")
+#define S_YSWITCH PSTR("YSwitch")
+#define S_DISABLED PSTR("Disabled")
+
 //==============================
-//    MENU beta      
+//    MENU     
 //==============================
 void Menu()
 {
-  int btnOk = digitalRead(6);
-  int btnA = digitalRead(7);
-  int btnB = digitalRead(5);
-    
-  if(btnOk!=btnOk_Last && btnOk==HIGH) { eMenuChange=(eMenuChange+1)%3; Changed=true;}
-    
-  if(Changed) 
-  {
-      lcd.clear();
-      lcd.noAutoscroll();
-         
-      //MENU=1
-      lcd.setCursor(0,0);
-      if(eMenuValue==0) MenuString("MODE",4,eMenuChange==0);
-      else if(eMenuValue==1) MenuString("General",7,eMenuChange==0);
-      else if(eMenuValue>=2 && eMenuValue<50)
-      {
-        char cPin[]="Pin 000";
-        cPin[6]+=(eMenuValue-2)%10;
-        cPin[5]+=(eMenuValue-2)/10;
-        MenuString(cPin,7,eMenuChange==0);
-      }
-      else if (eMenuValue==50) MenuString("LOG",3,eMenuChange==0);
-      else if (eMenuValue==51) { MenuString("---",3,eMenuChange==0);  lcd.setCursor(16,1);  lcd.autoscroll(); }
-      
-      //MENU=2
-      lcd.setCursor(0,1);
-      if(eMenuValue==0) 
-      {
-        switch(Mode)
-        {
-          case OffMode: MenuString("OFF",3,eMenuChange==1); break;
-          case StandbyMode: MenuString("StandBy",7,eMenuChange==1); break;
-          case MIDIMode: MenuString("MIDI",4,eMenuChange==1); break;
-          case ToolMode: MenuString("Tool",4,eMenuChange==1); break;
-        }
-      }
-      else if(eMenuValue==1)
-      {
-        switch(eMenuGeneral)
-        {
-          case 0: MenuString("Delay",5,eMenuChange==1); break;
-          case 1: MenuString("XTalk",5,eMenuChange==1); break;
-        }
-      }
-      else if(eMenuValue>=2 && eMenuValue<50)
-      {
-        switch(eMenuPin)
-        {
-          case 0: MenuString("Note",4,eMenuChange==1); break;
-          case 1: MenuString("Thresold",8,eMenuChange==1); break;
-          case 2: MenuString("ScanTime",8,eMenuChange==1); break;
-          case 3: MenuString("MaskTime",8,eMenuChange==1); break;
-          case 4: MenuString("Retrig",7,eMenuChange==1); break;
-          case 5: MenuString("Curve",5,eMenuChange==1); break;
-          case 6: MenuString("CurveF",6,eMenuChange==1); break;
-          case 7: MenuString("XTalk",5,eMenuChange==1); break;
-          case 8: MenuString("XTalkG",6,eMenuChange==1); break;
-          case 9: MenuString("Type",4,eMenuChange==1); break;
-          case 10: MenuString("CkNote",6,eMenuChange==1); break;
-          case 11: MenuString("Dual",4,eMenuChange==1); break;
-          case 12: MenuString("DualNote",8,eMenuChange==1); break;
-          case 13: MenuString("DThres",9,eMenuChange==1); break;
-          case 14: MenuString("Channel",7,eMenuChange==1); break;
-        }
-      }
-      else if(eMenuValue==50)
-     {
-       switch(eMenuLog)
-       {
-         case 0: MenuString("Pin",3,eMenuChange==1); break;
-         case 1: MenuString("Thresold",8,eMenuChange==1); break;
-       }
-     }
-    
-      //MENU=3
-      lcd.setCursor(11,1);
-      if(eMenuValue==1)
-      {
-        if(eMenuGeneral==0) MenuString(delayTime,3,eMenuChange==2);
-        else if(eMenuGeneral==1) MenuString(GeneralXtalk,2,eMenuChange==2);
-      }
-      else if(eMenuValue>=2  && eMenuValue<50)
-      {
-        if(eMenuPin==0) MenuString(NoteSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==1) MenuString(ThresoldSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==2) MenuString(ScanTimeSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==3) MenuString(MaskTimeSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==4) MenuString(RetriggerSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==5) MenuString(CurveSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==6) MenuString(CurveFormSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==7) MenuString(XtalkSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==8) MenuString(XtalkGroupSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==9) MenuString(TypeSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==10) MenuString(ChokeNoteSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==11) MenuString(DualSensor[eMenuValue-2],4,eMenuChange==2);
-        //else if(eMenuPin==12) MenuString(DualNoteSensor[eMenuValue-2],4,eMenuChange==2);
-        //else if(eMenuPin==13) MenuString(DualThresoldSensor[eMenuValue-2],4,eMenuChange==2);
-        else if(eMenuPin==14) MenuString(ChannelSensor[eMenuValue-2],4,eMenuChange==2);
-      }
-      else if(eMenuValue==50)
-      {
-       switch(eMenuLog)
-       {
-         case 0: MenuString(LogPin,4,eMenuChange==2);break;
-         case 1: MenuString(LogThresold,4,eMenuChange==2);break;
-       }
-      }
-        
-      Changed=false;
+  byte btnB = digitalRead(6);
+  byte btnA = digitalRead(7);
+  unsigned long now = millis();
+  
+  if(btnB==HIGH && btnA==HIGH) softReset();
+  
+  if(btnA_State==0) {
+    if(btnA==HIGH)
+    {
+      btnA_State=1;
+      btnA_Time=now;
+    }
   }
-    
-  btnOk_Last=btnOk;
-    
-  //CONTROL
-    
-  if(btnA!=btnA_Last && btnA==HIGH)
+  else  if(btnA_State==1) {
+    if(btnA==LOW)
+    {
+      btnA_State=2;
+    }
+    else if((btnA==HIGH) && (now> btnA_Time + HOLDDELAY))
+    {
+      eMenuSelect=(eMenuSelect+1)%3; 
+      Draw();
+      btnA_State=3;
+    }
+  }
+  else if(btnA_State==2) {
+    if(now>btnA_Time + DEBOUNCEDELAY)
+    {
+      Up();
+      Draw();
+    }
+    btnA_State=0;
+  }
+  else if(btnA_State==3) {
+    if(btnA==LOW)
+    {
+      btnA_State=0;
+    }
+  }
+  
+  
+  if(btnB_State==0) {
+    if(btnB==HIGH)
+    {
+      btnB_State=1;
+      btnB_Time=now;
+    }
+  }
+  else  if(btnB_State==1) {
+    if(btnB==LOW)
+    {
+      btnB_State=2;
+    }
+    else if((btnB==HIGH) && (now> btnB_Time + HOLDDELAY))
+    {
+      eMenuSelect=(eMenuSelect-1)>-1?eMenuSelect-1:2; 
+      Draw();
+      btnB_State=3;
+    }
+  }
+  else if(btnB_State==2) {
+    if(now>btnB_Time + DEBOUNCEDELAY)
+    {
+      Down();
+      Draw();
+    }
+    btnB_State=0;
+  }
+  else if(btnB_State==3) {
+    if(btnB==LOW)
+    {
+      btnB_State=0;
+    }
+  }
+}   
+
+//==============================
+//    UP
+//==============================
+
+void Up()
+{
+  if(eMenuSelect==0) 
+  { 
+    eMenuPage=(eMenuPage+1)%51; 
+    LogPin=eMenuPage-2; 
+    #if MENU_LOG
+    log_state=0;
+    #endif
+  }
+  else if(eMenuSelect==1)
   {
-      Changed=true;
-      //0=MODE,1=General,2-49=Pin
-      if(eMenuChange==0) eMenuValue=(eMenuValue+1)%52;
-      else if(eMenuChange==1)
-      {
-        if(eMenuValue==0) Mode=(Mode+1)%4; //MODE
-        else if(eMenuValue==1) eMenuGeneral=(eMenuGeneral+1)%2;//General
-        else if(eMenuValue>=2 && eMenuValue<50) eMenuPin=(eMenuPin+1)%15;//Pin
-        else if(eMenuValue==50) eMenuLog=(eMenuLog+1)%2;//LOG
-      }
-      else if(eMenuChange==2)
-      {
-        if(eMenuValue==1)//General
-        {
+    if(eMenuPage==0) Mode=(Mode+1)%4; //MODE
+    else if(eMenuPage==1) eMenuGeneral=(eMenuGeneral+1)%7;//General
+    else if(eMenuPage>=2 && eMenuPage<50) eMenuPin=(eMenuPin+1)%12;//Pin
+    else if(eMenuPage==50) eMenuPage=(eMenuPage+1)%51;//eMenuLog=(eMenuLog+1)%2;//LOG
+  }
+  else if(eMenuSelect==2)
+  {
+    if(eMenuPage==1)//General
+    {
           /*if(eMenuGeneral==0) delayTime=(delayTime+1)%999;//Delay
           else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk+1)%8;//XTalk
+          #if WAVTRIGGER
+          else if(eMenuGeneral==2) kit=(kit+1)%3;
+          #endif
+          else if(eMenuGeneral==3) { HHThresoldSensor[0]=(HHThresoldSensor[0]+1)%128; SaveHHEEPROM(0x04,HHThresoldSensor[0]); }
+          else if(eMenuGeneral==4) { HHThresoldSensor[1]=(HHThresoldSensor[1]+1)%128; SaveHHEEPROM(0x05,HHThresoldSensor[1]); }
+          else if(eMenuGeneral==5) { HHThresoldSensor[2]=(HHThresoldSensor[2]+1)%128; SaveHHEEPROM(0x06,HHThresoldSensor[2]); }
+          else if(eMenuGeneral==6) { HHThresoldSensor[3]=(HHThresoldSensor[3]+1)%128; SaveHHEEPROM(0x07,HHThresoldSensor[3]); }
         }
-        else if(eMenuValue>=2  && eMenuValue<50)//Pin
+        else if(eMenuPage>=2  && eMenuPage<50)//Pin
         {
           switch(eMenuPin)
           {
-            case 0: NoteSensor[eMenuValue-2]=(NoteSensor[eMenuValue-2]+1)%256;break;//Note
-            case 1: ThresoldSensor[eMenuValue-2]=(ThresoldSensor[eMenuValue-2]+1)%256;break;//Thresold
-            case 2: ScanTimeSensor[eMenuValue-2]=(ScanTimeSensor[eMenuValue-2]+1)%256;break;//ScanTime
-            case 3: MaskTimeSensor[eMenuValue-2]=(MaskTimeSensor[eMenuValue-2]+1)%256;break;//MaskTime
-            case 4: RetriggerSensor[eMenuValue-2]=(RetriggerSensor[eMenuValue-2]+1)%256;break;//Retrigger
-            case 5: CurveSensor[eMenuValue-2]=(CurveSensor[eMenuValue-2]+1)%256;break;//Curve
-            case 6: CurveFormSensor[eMenuValue-2]=(CurveFormSensor[eMenuValue-2]+1)%256;break;//CurveForm
-            case 7: XtalkSensor[eMenuValue-2]=(XtalkSensor[eMenuValue-2]+1)%256;break;//XTalk
-            case 8: XtalkGroupSensor[eMenuValue-2]=(XtalkGroupSensor[eMenuValue-2]+1)%256; break;//XTalkGroup
-            case 9: TypeSensor[eMenuValue-2]=(TypeSensor[eMenuValue-2]+1)%128; break;//Type
-            case 10: ChokeNoteSensor[eMenuValue-2]=(ChokeNoteSensor[eMenuValue-2]+1)%256; break;//ChokeNote
-            //case 11: DualSensor[eMenuValue-2]=(DualSensor[eMenuValue-2]+1)%256; break;//Dual
-            //case 12: DualNoteSensor[eMenuValue-2]=(DualNoteSensor[eMenuValue-2]+1)%256; break;//DualNote
-            //case 13: DualThresoldSensor[eMenuValue-2]=(DualThresoldSensor[eMenuValue-2]+1)%256; break;//DualThresold
-            case 14: ChannelSensor[eMenuValue-2]=(ChannelSensor[eMenuValue-2]+1)%256; break;//Channel
+            case 0: ADD(NoteSensor); SAVE(NOTE); break;//Note
+            case 1: ADD(ThresoldSensor); SAVE(THRESOLD); break;//Thresold
+            case 2: ADD(ScanTimeSensor); SAVE(SCANTIME); break;//ScanTime
+            case 3: ADD(MaskTimeSensor); SAVE(MASKTIME); break;//MaskTime
+            case 4: ADD(RetriggerSensor); SAVE(RETRIGGER); break;//Retrigger
+            case 5: ADD(CurveSensor); SAVE(CURVE); break;//Curve
+            case 6: ADD(CurveFormSensor); SAVE(CURVEFORM); break;//CurveForm
+            case 7: ADD(XtalkSensor); SAVE(XTALK); break;//XTalk
+            case 8: ADD(XtalkGroupSensor); SAVE(XTALKGROUP); break;//XTalkGroup
+            case 9: TypeSensor[eMenuPage-2]=(TypeSensor[eMenuPage-2]+1)%128; SAVE(TYPE); break;//Type
+            case 10: ADD(ChokeNoteSensor); SAVE(CHOKENOTE); break;//ChokeNote
+            #if ENABLE_CHANNEL
+            case 11:  ADD(ChannelSensor); SAVE(CHANNEL); break;//Channel
+            #endif
           }
         }
-        else if(eMenuValue==50) //LOG
+        else if(eMenuPage==50) //LOG
         {
-          switch(eMenuLog)
+          /*switch(eMenuLog)
           {
             case 0: LogPin=(LogPin+1)%49; break;
             case 1: LogThresold=(LogThresold+1)%256; break;
-          }
+          }*/
+          eMenuPage=(eMenuPage+1)%51;
         }
       }
-  }
-    
-  if(btnB!=btnB_Last && btnB==HIGH)
-  {
-      Changed=true;
-      if(eMenuChange==0) eMenuValue=(eMenuValue-1)>-1?eMenuValue-1:51;
-      else if(eMenuChange==1)
+ }
+ 
+ //==============================
+//    DRAW
+//==============================
+void Draw()
+{
+  lcd.clear();
+  lcd.noAutoscroll();
+  
+  Diagnostic=false;
+  
+      //MENU=1
+      lcd.setCursor(0,0);
+      if(eMenuPage==0) MenuString(S_MODE,eMenuSelect==0);
+      else if(eMenuPage==1) MenuString(S_GENERAL,eMenuSelect==0);
+      else if(eMenuPage>=2 && eMenuPage<50)
       {
-        if(eMenuValue==0) Mode=Mode-1>-1?Mode-1:3; //MODE
-        else if(eMenuValue==1) eMenuGeneral=eMenuGeneral-1>-1?eMenuGeneral-1:1; //General
-        else if(eMenuValue>=2 && eMenuValue<50) eMenuPin=eMenuPin-1>-1?eMenuPin-1:14; //Pin
-        else if(eMenuValue==50) eMenuLog=eMenuLog-1>-1?eMenuLog-1:1;//Log
+        /*char cPin[]="Pin 000";
+        cPin[6]+=(eMenuPage-2)%10;
+        cPin[5]+=(eMenuPage-2)/10;*/
+        #if WAVTRIGGER
+        wtPrintName((eMenuPage-2),false);
+        #else
+        MenuString(S_PIN,false);
+        #endif
+        MenuString((eMenuPage-2),eMenuSelect==0);
+
       }
-      else if(eMenuChange==2)
+      else if (eMenuPage==50) {if(Mode==ToolMode) Diagnostic=true; else MenuString(S_LOGDIS,false);}//MenuString(S_LOG,eMenuSelect==0);
+      //else if (eMenuPage==51) { MenuString(S_NULL,eMenuSelect==0);  lcd.setCursor(16,1);  lcd.autoscroll(); }
+
+      
+      //MENU=2
+      lcd.setCursor(0,1);
+      if(eMenuPage==0) 
       {
-        if(eMenuValue==1)//General
+        switch(Mode)
+        {
+          case OffMode: MenuString(S_OFF,eMenuSelect==1); break;
+          case StandbyMode: MenuString(S_STANDBY,eMenuSelect==1); break;
+          case MIDIMode: MenuString(S_MIDI,eMenuSelect==1); break;
+          case ToolMode: MenuString(S_TOOL,eMenuSelect==1); break;
+        }
+      }
+      else if(eMenuPage==1)
+      {
+        switch(eMenuGeneral)
+        {
+          case 0: MenuString(S_DELAY,eMenuSelect==1); break;
+          case 1: MenuString(S_XTALK,eMenuSelect==1); break;
+          case 2: MenuString(S_KIT,eMenuSelect==1); break;
+          case 3: MenuString(S_HHCT100,eMenuSelect==1); break;
+          case 4: MenuString(S_HHCT75,eMenuSelect==1); break;
+          case 5: MenuString(S_HHCT50,eMenuSelect==1); break;
+          case 6: MenuString(S_HHCT25,eMenuSelect==1); break;
+        }
+      }
+      else if(eMenuPage>=2 && eMenuPage<50)
+      {
+        if(Mode==ToolMode) 
+          return;
+              
+        switch(eMenuPin)
+        {
+          case 0: MenuString(S_NOTE,eMenuSelect==1); break;
+          case 1: MenuString(S_THRESOLD,eMenuSelect==1); break;
+          case 2: MenuString(S_SCANTIME,eMenuSelect==1); break;
+          case 3: MenuString(S_MASKTIME,eMenuSelect==1); break;
+          case 4: MenuString(S_RETRIG,eMenuSelect==1); break;
+          case 5: MenuString(S_CURVE,eMenuSelect==1); break;
+          case 6: MenuString(S_CURVEF,eMenuSelect==1); break;
+          case 7: MenuString(S_XTALK,eMenuSelect==1); break;
+          case 8: MenuString(S_XTALKG,eMenuSelect==1); break;
+          case 9: MenuString(S_TYPE,eMenuSelect==1); break;
+          case 10:
+          if(TypeSensor[eMenuPage-2]==PIEZO)
+            MenuString(S_GAIN,eMenuSelect==1);
+          else
+            MenuString(S_CKNOTE,eMenuSelect==1); 
+ 
+          break;
+          //case 11: MenuString(S_DUAL,eMenuSelect==1); break;
+          case 11: MenuString(S_CHANNEL,eMenuSelect==1); break;
+        }
+      }
+      /*else if(eMenuPage==50)
+     {
+       switch(eMenuLog)
+       {
+         case 0: MenuString(S_PIN,eMenuSelect==1); break;
+         case 1: MenuString(S_THRESOLD,eMenuSelect==1); break;
+       }
+     }*/
+    
+      //MENU=3
+      lcd.setCursor(11,1);
+      if(eMenuPage==1)
+      {
+        if(eMenuGeneral==0) MenuString(delayTime,eMenuSelect==2);
+        else if(eMenuGeneral==1) MenuString(GeneralXtalk,eMenuSelect==2);
+        #if WAVTRIGGER
+        else if(eMenuGeneral==2) 
+        {
+          lcd.setCursor(5,1);
+          if(kit==0) MenuString(S_FAT_STACKS,eMenuSelect==2);
+          else if(kit==1) MenuString(S_BOXER,eMenuSelect==2);
+          else if(kit==2) MenuString(S_BOMBASTIX,eMenuSelect==2);
+        }
+        #endif
+        else if(eMenuGeneral==3) MenuString(HHThresoldSensor[0],eMenuSelect==2);
+        else if(eMenuGeneral==4) MenuString(HHThresoldSensor[1],eMenuSelect==2);
+        else if(eMenuGeneral==5) MenuString(HHThresoldSensor[2],eMenuSelect==2);
+        else if(eMenuGeneral==6) MenuString(HHThresoldSensor[3],eMenuSelect==2);
+      }
+      else if(eMenuPage>=2  && eMenuPage<50)
+      {
+        if(eMenuPin==0) MenuString(NoteSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==1) MenuString(ThresoldSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==2) MenuString(ScanTimeSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==3) MenuString(MaskTimeSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==4) MenuString(RetriggerSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==5) MenuString(CurveSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==6) MenuString(CurveFormSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==7) MenuString(XtalkSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==8) MenuString(XtalkGroupSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==9)
+       {
+         switch(TypeSensor[eMenuPage-2])
+         {
+           case 0: MenuString(S_PIEZO,eMenuSelect==2); break;
+           case 1: MenuString(S_SWITCH,eMenuSelect==2); break;
+           case 2: MenuString(S_HHC,eMenuSelect==2); break;
+           case 3: MenuString(S_HH,eMenuSelect==2); break;
+           case 4: MenuString(S_HHS,eMenuSelect==2); break;
+           case 5: MenuString(S_YSWITCH,eMenuSelect==2); break;
+           case 127: MenuString(S_DISABLED,eMenuSelect==2); break;
+         }
+       }
+        else if(eMenuPin==10) MenuString(ChokeNoteSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==11) MenuString(DualSensor(eMenuPage-2),eMenuSelect==2);
+        #if ENABLE_CHANNEL
+        else if(eMenuPin==12) MenuString(ChannelSensor[eMenuPage-2],eMenuSelect==2);
+        #endif
+      }
+      /*else if(eMenuPage==50)
+      {
+       switch(eMenuLog)
+       {
+         case 0: MenuString(LogPin,eMenuSelect==2);break;
+         case 1: MenuString(LogThresold,eMenuSelect==2);break;
+       }
+      }*/
+        
+      //Changed=false;
+ }
+ 
+//==============================
+//    DOWN
+//==============================
+ void Down()
+ {
+   
+  if(eMenuSelect==0) { 
+    eMenuPage=(eMenuPage-1)>-1?eMenuPage-1:50; 
+    LogPin=eMenuPage-2; 
+    #if MENU_LOG
+    log_state=0;
+    #endif
+  }
+  else if(eMenuSelect==1)
+      {
+        if(eMenuPage==0) Mode=Mode-1>-1?Mode-1:3; //MODE
+        else if(eMenuPage==1) eMenuGeneral=eMenuGeneral-1>-1?eMenuGeneral-1:6; //General
+        else if(eMenuPage>=2 && eMenuPage<50) eMenuPin=eMenuPin-1>-1?eMenuPin-1:11; //Pin
+        else if(eMenuPage==50) eMenuPage=(eMenuPage-1)>-1?eMenuPage-1:50;//eMenuLog=eMenuLog-1>-1?eMenuLog-1:1;//Log
+      }
+      else if(eMenuSelect==2)
+      {
+        if(eMenuPage==1)//General
         {
           /*if(eMenuGeneral==0) delayTime=delayTime-1>-1?delayTime-1:999;//Delay
           else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk-1>-1)?GeneralXtalk-1:7;//General XTalk
+          #if WAVTRIGGER
+          else if(eMenuGeneral==2) kit=(kit-1>-1)?kit-1:2;
+          #endif
+          else if(eMenuGeneral==3) { HHThresoldSensor[0]=((HHThresoldSensor[0]-1)>-1)?HHThresoldSensor[0]-1:127; SaveHHEEPROM(0x04,HHThresoldSensor[0]); }
+          else if(eMenuGeneral==4) { HHThresoldSensor[1]=((HHThresoldSensor[1]-1)>-1)?HHThresoldSensor[1]-1:127; SaveHHEEPROM(0x05,HHThresoldSensor[1]); }
+          else if(eMenuGeneral==5) { HHThresoldSensor[2]=((HHThresoldSensor[2]-1)>-1)?HHThresoldSensor[2]-1:127; SaveHHEEPROM(0x06,HHThresoldSensor[2]); }
+          else if(eMenuGeneral==6) { HHThresoldSensor[3]=((HHThresoldSensor[3]-1)>-1)?HHThresoldSensor[3]-1:127; SaveHHEEPROM(0x07,HHThresoldSensor[3]); }
         }
-        else if(eMenuValue>=2  && eMenuValue<50)//Pin
+        else if(eMenuPage>=2  && eMenuPage<50)//Pin
         {
           switch(eMenuPin)
           {
-            case 0: NoteSensor[eMenuValue-2]=NoteSensor[eMenuValue-2]-1>-1?NoteSensor[eMenuValue-2]-1:255; break;//Note
-            case 1: ThresoldSensor[eMenuValue-2]=ThresoldSensor[eMenuValue-2]-1>-1?ThresoldSensor[eMenuValue-2]-1:255;break;//Thresold
-            case 2: ScanTimeSensor[eMenuValue-2]=ScanTimeSensor[eMenuValue-2]-1>-1?ScanTimeSensor[eMenuValue-2]-1:255;break;//ScanTime
-            case 3: MaskTimeSensor[eMenuValue-2]=MaskTimeSensor[eMenuValue-2]-1>-1?MaskTimeSensor[eMenuValue-2]-1:255;break;//MaskTime
-            case 4: RetriggerSensor[eMenuValue-2]=RetriggerSensor[eMenuValue-2]-1>-1?RetriggerSensor[eMenuValue-2]-1:255;break;//Retrigger
-            case 5: CurveSensor[eMenuValue-2]=CurveSensor[eMenuValue-2]-1>-1?CurveSensor[eMenuValue-2]-1:255;break;//Curve
-            case 6: CurveFormSensor[eMenuValue-2]=CurveFormSensor[eMenuValue-2]-1>-1?CurveFormSensor[eMenuValue-2]-1:255;break;//CurveForm
-            case 7: XtalkSensor[eMenuValue-2]=XtalkSensor[eMenuValue-2]-1>-1?XtalkSensor[eMenuValue-2]-1:255;break;//XTalk
-            case 8: XtalkGroupSensor[eMenuValue-2]=XtalkGroupSensor[eMenuValue-2]-1>-1?XtalkGroupSensor[eMenuValue-2]-1:255;break;//XTalkGroup
-            case 9: TypeSensor[eMenuValue-2]=TypeSensor[eMenuValue-2]-1>-1?TypeSensor[eMenuValue-2]-1:127;break;//Type
-            case 10: ChokeNoteSensor[eMenuValue-2]=ChokeNoteSensor[eMenuValue-2]-1>-1?ChokeNoteSensor[eMenuValue-2]-1:255;break;//ChokeNote
-            //case 11: DualSensor[eMenuValue-2]=DualSensor[eMenuValue-2]-1>-1?DualSensor[eMenuValue-2]-1:255;break;//Dual
-            //case 12: DualNoteSensor[eMenuValue-2]=DualNoteSensor[eMenuValue-2]-1>-1?DualNoteSensor[eMenuValue-2]-1:255;break;//DualNote
-            //case 13: DualThresoldSensor[eMenuValue-2]=DualThresoldSensor[eMenuValue-2]-1>-1?DualThresoldSensor[eMenuValue-2]-1:255;break;//DualThresold
-            case 14: ChannelSensor[eMenuValue-2]=ChannelSensor[eMenuValue-2]-1>-1?ChannelSensor[eMenuValue-2]-1:255;break;//Channel
+            case 0: SUB(NoteSensor); SAVE(NOTE); break;//Note
+            case 1: SUB(ThresoldSensor); SAVE(THRESOLD); break;//Thresold
+            case 2: SUB(ScanTimeSensor); SAVE(SCANTIME); break;//ScanTime
+            case 3: SUB(MaskTimeSensor); SAVE(MASKTIME); break;//MaskTime
+            case 4: SUB(RetriggerSensor); SAVE(RETRIGGER); break;//Retrigger
+            case 5: SUB(CurveSensor); SAVE(CURVE); break;//Curve
+            case 6: SUB(CurveFormSensor); SAVE(CURVEFORM); break;//CurveForm
+            case 7: SUB(XtalkSensor); SAVE(XTALK); break;//XTalk
+            case 8: SUB(XtalkGroupSensor); SAVE(XTALKGROUP); break;//XTalkGroup
+            case 9: SUB(TypeSensor); SAVE(TYPE); break;//Type
+            case 10: SUB(ChokeNoteSensor); SAVE(CHOKENOTE); break;//ChokeNote
+            #if ENABLE_CHANNEL
+            case 11: SUB(ChannelSensor); SAVE(CHANNEL); break;//Channel
+            #endif
           }
-        
         }
-        else if(eMenuValue==50)
+        else if(eMenuPage==50)
         {
-          switch(eMenuLog)
+          /*switch(eMenuLog)
           {
             case 0: LogPin=LogPin-1>-1?LogPin-1:48; break;
             case 1: LogThresold=LogThresold-1>-1?LogThresold-1:255; break;
-          }
+          }*/
+          eMenuPage=(eMenuPage-1)>-1?eMenuPage-1:50;
         }
-      }
+      }  
+ }
+
+#if MENU_LOG
+void DrawLog(byte x)
+{
+   lcd.setCursor(0,1);
+   
+  if(log_state==2) MenuString(log_Nmax,'N',' ');
+  else
+  { 
+    if(x==0)
+    {
+      MenuString(log_Nmax,'n',' ');
+      MenuString(log_Vmax,'V',' ');
+      MenuString(log_note,'N',' ');
+    }
+    else if(x==1)
+    {
+      MenuString(log_T2-log_T1,'T',' ');
+      MenuString(log_Tmax-log_T1,'t',' ');     
+      MenuString(log_T80==0?0:log_T80-log_Tmax,'a',' ');
+    }
+    else if(x==2)
+    {
+      MenuString(log_T70==0?0:log_T70-log_Tmax,'b',' ');
+      MenuString(log_T60==0?0:log_T60-log_Tmax,'c',' ');
+      MenuString(log_T50==0?0:log_T50-log_Tmax,'d',' ');
+    }
+    else if(x==3)
+    {
+      MenuString(log_T40==0?0:log_T40-log_Tmax,'e',' ');
+      MenuString(log_T30==0?0:log_T30-log_Tmax,'f',' ');
+      MenuString(log_T20==0?0:log_T20-log_Tmax,'g',' ');
+    }
   }
-  btnA_Last=btnA;
-  btnB_Last=btnB;
-}   
-
-void MenuString(String str,bool sel)
-{
-  char cStr[str.length()];
-  str.toCharArray(cStr,str.length());
-  MenuString(cStr,str.length(),sel);
-}
-void MenuString(int inter,int sz,bool sel)
-{
-  String sInter=String(inter);
-  char cInter[sz];
-  sInter.toCharArray(cInter,sz);
-  MenuString(cInter,sInter.length(),sel);
 }
 
-void MenuString(char* str,int sz,bool sel)
+#endif
+
+void DrawDiagnostic(byte i,byte val)
 {
-  char ret[17]="                ";
-  if(sel) ret[0]='<';
-  int i=0;
-  while(i<sz) ret[i+1]=str[i++];
-  if(sel) ret[i+2]='>';
- lcd.print(ret);
+  if(i>31) return;
+  
+  lcd.setCursor(i%16,i/16);
+  lcd.print(val/16);
+  
+}
+void MenuString(int inter,bool sel) //sz si puo togliere
+{
+  if(sel) MenuString(inter,'<','>');
+  else MenuString(inter,' ',' ');
+}
+
+void MenuString(int inter,char A,char B) //sz si puo togliere
+{
+  char cInter[]=" 000 ";
+  cInter[0]=A; cInter[4]=B;
+  cInter[3]+=inter%10;
+  cInter[2]+=(inter%100)/10;
+  cInter[1]+=(inter%1000)/100;
+  lcd.print(cInter);
+}
+void MenuString(const PROGMEM char *s,bool sel)
+{
+  char c;
+  if(sel) lcd.print('<');
+  while ((c = pgm_read_byte_near(s++)) != 0)
+     lcd.print(c);
+  if(sel) lcd.print('>');
 }
 
 #endif

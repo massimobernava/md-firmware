@@ -10,6 +10,7 @@ void noteOn(byte channel, byte note, byte velocity) {
     Serial.write(velocity);
     //digitalWrite(ledPin,LOW);
     //fastWrite(ledPin,LOW);
+
 }
 
 void noteOff(byte channel, byte note, byte velocity) {
@@ -28,9 +29,13 @@ void midiMsg(byte cmd, byte data1, byte data2) {
   Serial.write(data1);
   Serial.write(data2);
 }
-//SYSEX========================================
+//=============SYSEX=========
 void simpleSysex(byte cmd,byte data1,byte data2,byte data3)
 {
+  #if MENU
+  if(cmd==0x6F) DrawDiagnostic(data1,data2);
+  #endif
+          
   //OTTIMIZZA
   Serial.write(0xF0);
   Serial.write(0x77);
@@ -50,3 +55,5 @@ void Sysex(byte cmd,byte* message,byte size)
   Serial.write(0xF7);
 }
 //============================
+
+

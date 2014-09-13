@@ -1,21 +1,27 @@
+
 //=====================================================================================
-//=>            microDRUM firmware v1.1 beta8
+//=>            microDRUM firmware v1.2.1
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2013-03-05
+//=> 2014-09-13
 //=====================================================================================
 
 //========CONFIGURE=============
-#define MENU 0
+#define MENU 1
 #define PROF 0
 #define VERYFASTADC 1
-#define SERIAL 0
+#define SERIALSPEED 1
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
-#define LICENSE 1
+#define LICENSE 0
+#define WAVTRIGGER 1
+#define WT_16 1
+//#define WT_24 1
+#define ENABLE_CHANNEL 1
+#define MENU_LOG 0
 //==============================
 
 #if defined(__arm__) 
@@ -24,17 +30,62 @@
 #elif defined(__AVR__) 
 #include <EEPROM.h>
 #endif
-
+#if WAVTRIGGER
+#include <SoftwareSerial.h>
+#endif
 #include <math.h>
 
 #if MENU
 #include <LiquidCrystal.h>
 #endif
 
+//===========MODE============
 #define OffMode     0
 #define StandbyMode 1
 #define MIDIMode    2
 #define ToolMode    3
+//============================
+
+//===========SETTING============
+#define NOTE       0x00
+#define THRESOLD   0x01
+#define SCANTIME   0x02
+#define MASKTIME   0x03
+#define RETRIGGER  0x04
+#define CURVE      0x05
+#define XTALK      0x06
+#define XTALKGROUP 0x07
+#define CURVEFORM  0x08
+#define CHOKENOTE  0x09
+#define DUAL       0x0A
+#define TYPE       0x0D
+#define CHANNEL    0x0E
+//===============================
+
+//===========TYPE============
+#define PIEZO    0
+#define SWITCH   1
+#define HHC      2
+#define HH       3
+#define HHS      4
+#define YSwitch  5
+#define Disabled 127
+//============================
+
+//===========TIME============
+#define NORMAL_TIME        0
+#define SCAN_TIME          1
+#define MASK_TIME          2
+#define RETRIGGER_TIME     3
+#define PIEZO_TIME         4
+#define SWITCH_TIME        5
+#define CHOKE_TIME         6
+#define FOOTSPLASH_TIME    7
+#define FOOTCLOSE_TIME     8
+#define SCANRETRIGGER_TIME 9
+//===========================
+
+
 
 // defines for setting and clearing register bits
 #ifndef cbi
@@ -46,7 +97,8 @@
 
 #define TIMEFUNCTION millis() //NOT micros() (thresold error)
 
-#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=127) { CheckMulti(n1,n2); if(MaxReadingSensor[n2+(n1<<3)]>0) { CheckMulti(n1,n2); CheckMulti(n1,n2); CheckMulti(n1,n2);}}
+#define fastCheckMulti(n1,n2) if(TypeSensor[n2+(n1<<3)]!=Disabled) { CheckMulti(n1,n2); if(StateSensor[n2+(n1<<3)]==SCAN_TIME) { CheckMulti(n1,n2); CheckMulti(n1,n2); CheckMulti(n1,n2);}}
+
 
 #if defined(__arm__) 
 #define fastWrite(_pin_, _state_) digitalWrite(_pin_, _state_);
@@ -54,7 +106,18 @@
 //#define fastWrite(_pin_, _state_) ( _pin_ < 8 ? (_state_ ?  PORTD |= 1 << _pin_ : PORTD &= ~(1 << _pin_ )) : (_state_ ?  PORTB |= 1 << (_pin_ -8) : PORTB &= ~(1 << (_pin_ -8)  )))
 #define fastWrite(_pin_, _state_) (_state_ ?  PORTD |= 1 << _pin_ : PORTD &= ~(1 << _pin_ ))
 #endif
-#define fastNoteOn(_channel,_note,_velocity) {Serial.write(0x90 | _channel);Serial.write(_note);Serial.write(_velocity);}
+
+#if ENABLE_CHANNEL
+#define fastNoteOn(_channel,_note,_velocity) { Serial.write(0x90 | _channel);Serial.write(_note);Serial.write(_velocity); }
+#define fastMidiCC(_channel,_number,_value) { Serial.write((0xB0 | _channel)); Serial.write(_number); Serial.write(_value); }
+#else
+#define fastNoteOn(_channel,_note,_velocity) { Serial.write(0x90 | 0x09); Serial.write(_note); Serial.write(_velocity);}
+#define fastMidiCC(_channel,_number,_value) { Serial.write((0xB0 | 0x09)); Serial.write(_number); Serial.write(_value); }
+#endif
+
+#define DualSensor(i) (_DualSensor[(i)&0x07]+((i)&0xF8))
+//127=Disabled
+const byte _DualSensor[]    = {3,2,1,0,6,7,4,5};
 
 unsigned long Time;
 
@@ -63,11 +126,37 @@ byte LicenseData[]={0,0};
 const byte MaxNSensor=6;
 #endif
 
-//Log
+//==========LOG====================
 byte LogPin=0xFF;
 byte LogThresold=0xFF;
-int N=0;//Unsent log
+
+short N=0;//Unsent log
+
 bool Diagnostic=false;
+
+#if MENU_LOG
+byte log_state=0;
+unsigned long log_T1=0;
+unsigned long log_T2=0;
+
+unsigned long log_Tmax=0;
+
+int log_Vmax=0;
+byte log_Nmax=0;
+
+byte log_note=0;
+byte log_oldState=0;
+
+unsigned long log_T80=0;
+unsigned long log_T70=0;
+unsigned long log_T60=0;
+unsigned long log_T50=0;
+unsigned long log_T40=0;
+unsigned long log_T30=0;
+unsigned long log_T20=0;
+#endif
+
+//=================================
 
 //Mode
 byte Mode=OffMode;//StandbyMode;//
@@ -92,7 +181,7 @@ byte NSensor=2;
 
 //===HiHat==================
 byte HHNoteSensor[]     = {20,50,80,100};
-byte HHThresoldSensor[] = {54,55,56,57};
+byte HHThresoldSensor[] = {48,36,24,12};
 byte HHFootNoteSensor[] = {59,48};
 byte HHFootThresoldSensor[] = {127,127};
 //===========================
@@ -118,16 +207,15 @@ byte XtalkGroupSensor[]  = {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0 
 //0=Piezo 1=Switch 2=HHC 3=HH 4=HHs 5=YSwitch 127=Disabled
 byte TypeSensor[]  = {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,2,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
 byte ChokeNoteSensor[]   = {127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,78  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127};
-//127=Disabled
-const byte DualSensor[]    = {3,2,1,0,6,7,4,5  ,11,10,9,8,14,15,12,13  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127  ,127,127,127,127,127,127,127,127};
-//byte DualNoteSensor[]=  {0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0};
-//byte DualThresoldSensor[]={0,0,0,0,0,0,0,0                ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0                  ,0,0,0,0,0,0,0,0};
-byte ChannelSensor[]=     {9,9,9,9,9,9,9,9                ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9};
 
-byte ZeroCountSensor[]  = {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
-unsigned long TimeSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
-int MaxReadingSensor[] = {-1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1};
-int MaxRetriggerSensor[]= {0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0  ,0,0,0,0,0,0,0,0};
+#if ENABLE_CHANNEL
+byte ChannelSensor[]=     {9,9,9,9,9,9,9,9                ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9                  ,9,9,9,9,9,9,9,9};
+#endif
+
+byte StateSensor[NPin];
+unsigned long TimeSensor[NPin];
+int MaxReadingSensor[NPin];
+int MaxRetriggerSensor[NPin];
 
 int yn_1[NPin];
 
@@ -141,32 +229,46 @@ const byte Permutation[] = { 0x72, 0x32 , 0x25 , 0x64 , 0x64 , 0x4f , 0x1e , 0x2
 //    MENU
 //==============================
 #if MENU
-int eMenuChange=0;
-int eMenuValue=0;
-int eMenuGeneral=0;
-int eMenuPin=0;
-int eMenuLog=0;
-int btnOk_Last=LOW;
-int btnA_Last=LOW;
-int btnB_Last=LOW;
-bool Changed=true;
+#define HOLDDELAY 500
+#define DEBOUNCEDELAY 50
+byte eMenuSelect=0;
+byte eMenuPage=0;
+byte eMenuGeneral=0;
+byte eMenuPin=0;
+//byte eMenuLog=0;
+byte btnB_State=0;
+byte btnA_State=0;
+unsigned long btnA_Time=0;
+unsigned long btnB_Time=0;
+//byte btnA_Click=0;
+//bool Changed=true;
 
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
-byte *getChar(int n, byte newChar[]) 
-{
-  int i;
-  
-  for (i = 0; i < 7-n; i++)
-    newChar[i] = B00000;
-    
-  for (i = 7-n; i < 8; i++)
-    newChar[i] = B11111;
-  return newChar;
+/*byte level1[8] = {
+    B00000,
+    B00000,
+    B00000,
+    B00000,
+    B00000,
+    B00000,
+    B00000,
+    B11111
+};*/
 
-}
 #endif
 //==============================
+
+#if WAVTRIGGER
+
+#define FAT_STACKS 0
+#define BOXER 1
+#define BOMBASTIX 2
+
+byte kit=2;
+
+SoftwareSerial mySerial(6, 5); // RX, TX
+#endif
 
 //==============================
 //     SETUP
@@ -179,12 +281,6 @@ void setup()
   LicenseData[0]=random(128);
   LicenseData[1]=random(128);
   #endif
-  
-  #if MENU
-  byte newChar[8];
-  for (int i = 0; i < 8; i++)
-    lcd.createChar(i, getChar(i, newChar));
-  #endif
 
   pinMode(2, OUTPUT);    // s0
   pinMode(3, OUTPUT);    // s1
@@ -192,21 +288,28 @@ void setup()
 
   Time=TIMEFUNCTION;
   for (int count=0; count<NPin; count++)
+  {
     TimeSensor[count]=Time+MaskTimeSensor[count];
+    MaxReadingSensor[count]=-1;
+    MaxRetriggerSensor[count]=0;//0xFF;
+  }
 
   #if MENU
   pinMode(7, INPUT);
   pinMode(6, INPUT);
-  pinMode(5, INPUT);
   #endif
   
-  #if SERIAL
+  #if SERIALSPEED
   Serial.begin(115200);    //Serial
   #else
   Serial.begin(31250);      // MIDI
   #endif
   
   Serial.flush();
+  
+  #if WAVTRIGGER
+  mySerial.begin(57600);//31250);
+  #endif
   
   #if defined(__AVR__) 
   analogReference(DEFAULT);
@@ -243,7 +346,9 @@ void setup()
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
-  lcd.print("microDRUM v1.1");
+  //lcd.print("microDRUM v1.1");
+  //lcd.createChar(0, level1);
+  MenuString(PSTR("microDRUM v1.2"),false);
   #endif
   
   fastWrite(3,0);fastWrite(4,0);

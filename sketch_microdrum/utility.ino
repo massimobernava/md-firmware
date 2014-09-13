@@ -2,7 +2,7 @@
 //==============================
 //    SENDLOG
 //==============================
-void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
+void SendLog(byte Sensor,int N,int Y0,int MaxRetrigger,int MaxReading,byte State)
 {
   //Time               4 bytes
   //Sensor             1 byte
@@ -24,8 +24,8 @@ void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
   buf[5] = (byte)N;
   buf[6] = (byte)(N>>8);
   
-  buf[7] = (byte)Reading;
-  buf[8] = (byte)(Reading>>8);
+  buf[7] = (byte)MaxRetrigger;
+  buf[8] = (byte)(MaxRetrigger>>8);
   
   buf[9] = (byte)Y0;
   buf[10] = (byte)(Y0>>8);
@@ -37,14 +37,6 @@ void SendLog(byte Sensor,int N,int Reading,int Y0,int MaxReading,byte State)
   
   Sysex(0x6E,buf,14);
   
-  
-  #if MENU
-  if(eMenuValue==51)
-  {
-   int lev=Y0/16;
-   lcd.write(lev);
-  }
-  #endif
 }
 
 //==============================
@@ -92,6 +84,107 @@ byte PearsonHash(byte* in,byte size)
 #endif
 
 //==============================
+//    LOGTOOL
+//==============================
+void LogTool(int yn_0,byte MulSensor)
+{
+   #if MENU_LOG
+   //autodeterminazione del rumore massimo Nmax in un intervallo fisso di 5s
+    if(log_state==0)
+    {
+      log_T1=TIMEFUNCTION;
+      log_Nmax=yn_0;
+      log_state=1;
+    }
+    else if(log_state==1)
+    {
+      if(yn_0>log_Nmax) log_Nmax=yn_0;
+      if((log_T1+10000)<TIMEFUNCTION) log_state=2;
+    }
+    else if(log_state==2)
+    {
+      DrawLog(0);
+      if(yn_0>log_Nmax)
+      {
+        log_T1=TIMEFUNCTION;
+        log_state=3;
+        log_Vmax=0;
+        log_note=0;
+      }
+    }
+    else if(log_state==3)
+    {
+      if(log_oldState==0 && StateSensor[MulSensor]==1) log_note++;
+      log_oldState=StateSensor[MulSensor];
+    
+      if(yn_0>log_Nmax)
+      {
+        DrawLog(0);
+        log_T2=TIMEFUNCTION;
+        if(yn_0>log_Vmax)
+        {
+          log_Vmax=yn_0;
+          log_Tmax=log_T2;
+
+          log_T80=0;
+          log_T70=0;
+          log_T60=0;
+          log_T50=0;
+          log_T40=0;
+          log_T30=0;
+          log_T20=0;
+        }
+        else
+        {
+          //if(((yn_0-log_VMax)/(log_T2-log_Tmax))>log_Dmax)
+          //  log_Dmax=((yn_0-log_VMax)/(log_T2-log_Tmax));
+          if(yn_0>(int)((float)log_Vmax*0.8))
+            log_T80=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.7))
+            log_T70=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.6))
+            log_T60=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.5))
+            log_T50=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.4))
+            log_T40=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.3))
+            log_T30=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.2))
+            log_T20=log_T2;
+          }
+      }
+      if((TIMEFUNCTION-log_T1)>1000)
+      {
+        log_state=4;
+        N=0;
+      }
+    }
+    else if(log_state==4)
+    {
+      if(N==0) DrawLog(0);
+      else if(N==2000) DrawLog(1);
+      else if(N==4000) DrawLog(2);
+      else if(N==6000) DrawLog(3);
+    
+      N++;
+      if(N==8000) N=0;
+      if(yn_0>log_Nmax)
+      {
+        log_T1=TIMEFUNCTION;
+        log_state=3;
+        log_Vmax=0;
+        log_note=0;
+      }
+    }
+  #else
+    N++;
+    if(yn_0>=(LogThresold*2))
+    SendLog(MulSensor,N,yn_0,MaxRetriggerSensor[MulSensor],MaxReadingSensor[MulSensor],StateSensor[MulSensor]);
+  #endif  
+}
+
+//==============================
 //    PLAYSENSOR TOOLMODE
 //==============================
 void PlaySensorTOOLMode(byte i)
@@ -99,10 +192,21 @@ void PlaySensorTOOLMode(byte i)
   //===============================
   //        Switch
   //===============================
-  if(TypeSensor[i]==1)
+  /*if(TypeSensor[i]==1)
   {
     simpleSysex(0x6F,i,MaxReadingSensor[i],0);
     MaxReadingSensor[i] = -1;
+    return;
+  }*/
+  if(TypeSensor[i]==SWITCH)
+  { 
+    simpleSysex(0x6F,i,MaxReadingSensor[i],0);
+    
+    if(StateSensor[i]==SWITCH_TIME)
+    {   
+      StateSensor[i]=MASK_TIME;
+      MaxReadingSensor[i] = -1;
+    }
     return;
   }
   //===============================
@@ -114,19 +218,45 @@ void PlaySensorTOOLMode(byte i)
     MaxReadingSensor[i] = -1;
     return;
   }
-  //====================================================================
-  if ((Time-TimeSensor[i]) >= ScanTimeSensor[i] /*|| TypeSensor[i]==1*/)
+  //===============================
+  //        Piezo, HH
+  //===============================
+  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ StateSensor[i]==PIEZO_TIME)
+  {          
+      //Piezo
+      if(/*DualSensor(i)!=127 &&*/ TypeSensor[i]==PIEZO)
+      {
+        simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+        
+        StateSensor[i]=MASK_TIME;
+              
+        //Piezo-Switch
+        if(TypeSensor[DualSensor(i)]==SWITCH && StateSensor[DualSensor(i)]==SWITCH_TIME )
+        {
+              simpleSysex(0x6F,DualSensor(i),127,0);
+
+              StateSensor[DualSensor(i)]=MASK_TIME;
+              MaxReadingSensor[DualSensor(i)] = -1;
+         }
+      }
+      else //HH========================================
+        simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+               
+    MaxReadingSensor[i] = -1;
+  }
+  /*
+  if ((Time-TimeSensor[i]) >= ScanTimeSensor[i] )
   {         
-    if (MaxReadingSensor[i] > ThresoldSensor[i])
+    //if (MaxReadingSensor[i] > ThresoldSensor[i])
     {
       //Dual
-      if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/)
+      if(TypeSensor[i]==PIEZO)
       {
         //Piezo-Piezo
-        if(TypeSensor[DualSensor[i]]==0) //Piezo-Piezo
+        if(TypeSensor[DualSensor(i)]==PIEZO) //Piezo-Piezo
         {
           //DUAL
-          if(MaxReadingSensor[DualSensor[i]]>MaxReadingSensor[i])
+          if(MaxReadingSensor[DualSensor(i)]>MaxReadingSensor[i])
           {
             MaxReadingSensor[i]=-1;
             return;
@@ -134,29 +264,33 @@ void PlaySensorTOOLMode(byte i)
           else
           {
             simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-            MaxReadingSensor[DualSensor[i]]=-1;  //Dual XTalk
+            MaxReadingSensor[DualSensor(i)]=-1;  //Dual XTalk
           }
-          /*if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
-            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-          else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
-            simpleSysex(0x6F,DualSensor[i],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]]),0);
-          else if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
-            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-          else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
-            simpleSysex(0x6F,DualSensor[i],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]]),0);*/
         }
-        else if(TypeSensor[DualSensor[i]]==1)//Piezo-Switch
+        else if(TypeSensor[DualSensor(i)]==SWITCH)//Piezo-Switch
         {
           //Se lo switch è stato attivato questo viene inibito altrimenti suona come un piezo normale
-          if(MaxReadingSensor[DualSensor[i]]<0 || ZeroCountSensor[DualSensor[i]]>0)
+          if(MaxReadingSensor[DualSensor(i)]<0)
           {
+            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+            //simpleSysex(0x6F,DualSensor(i),ZeroCountSensor[DualSensor(i)],0);
             MaxReadingSensor[i] = -1;
+            
+            //STOP SWITCH
+            MaxReadingSensor[DualSensor(i)]=-1;
+            StateSensor[DualSensor(i)]=0;
           } 
           else
            {
+             simpleSysex(0x6F,DualSensor(i),UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+             
              MaxReadingSensor[i] = -1;
              //Lo mettiamo in mask
              TimeSensor[i]=Time-ScanTimeSensor[i];
+            
+            //STOP SWITCH
+            MaxReadingSensor[DualSensor(i)]=-1;
+            StateSensor[DualSensor(i)]=NORMAL_TIME;
            }   
           return;
         }
@@ -170,7 +304,7 @@ void PlaySensorTOOLMode(byte i)
     }//Thresold
    
     MaxReadingSensor[i] = -1;
-  }//ScanTime
+  }//ScanTime*/
 }
 
 //==============================

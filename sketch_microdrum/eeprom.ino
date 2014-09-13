@@ -51,7 +51,7 @@ void LoadAllEEPROM()
     for(int h=0;h<12;h++)
       LoadHHEEPROM(h);
     
-    for(int i=0;i<48;i++)
+    for(int i=0;i<NPin;i++)
       for(int j=0;j<14;j++)
         LoadEEPROM(i,j);
   }
@@ -72,6 +72,13 @@ void SaveEEPROM(byte Pin,byte Param,byte Value)
   #if defined(__AVR__)
   ExecCommand(0x03,Pin,Param,Value);
   EEPROM.write(100+(Pin*16)+Param, Value);
+  #endif
+}
+
+void SaveEEPROM(byte Pin,byte Param)
+{
+  #if defined(__AVR__)
+  EEPROM.write(100+(Pin*16)+Param, GetPinSetting(Pin,Param));
   #endif
 }
 

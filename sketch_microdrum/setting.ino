@@ -1,57 +1,11 @@
+
 //==============================
 //    SETTING
 //==============================
-void SendPinSetting(int Pin,int Set)
+void SendPinSetting(byte Pin,byte Set)
 {
-  int Value=0;
-  switch(Set)
-  {
-    case 0x00: //NOTE
-      Value=NoteSensor[Pin];
-    break;
-    case 0x01: //THRESOLD
-      Value=ThresoldSensor[Pin];
-    break;
-    case 0x02: //SCANTIME
-      Value=ScanTimeSensor[Pin];
-    break;
-    case 0x03: //MASKTIME
-      Value=MaskTimeSensor[Pin];
-    break;
-    case 0x04: //RETRIGGER
-      Value=RetriggerSensor[Pin];
-    break;
-    case 0x05: //CURVE
-      Value=CurveSensor[Pin];
-    break;
-    case 0x06: //XTALK
-      Value=XtalkSensor[Pin];
-    break;
-    case 0x07: //XTALKGROUP
-      Value=XtalkGroupSensor[Pin];
-    break;
-    case 0x08: //CURVEFORM
-      Value=CurveFormSensor[Pin];
-    break;
-    case 0x09: //CHOKE
-      Value=ChokeNoteSensor[Pin];
-      break;
-    case 0x0A: //DUAL
-      Value=DualSensor[Pin];
-      break;
-    /*case 0x0B: //DUALNOTE
-      Value=DualNoteSensor[Pin];
-      break;
-    case 0x0C: //DUALTHRESOLD
-      Value=DualThresoldSensor[Pin];
-      break;*/     
-    case 0x0D: //TYPE
-      Value=TypeSensor[Pin];
-      break;
-    case 0x0E: //CHANNEL
-      Value=ChannelSensor[Pin];
-      break; 
-    case 0x7F://All 
+  if(Set==0x7F)//All
+  { 
       simpleSysex(0x02,Pin,0x00,NoteSensor[Pin]);//NOTE
       simpleSysex(0x02,Pin,0x01,ThresoldSensor[Pin]);//THRESOLD
       simpleSysex(0x02,Pin,0x02,ScanTimeSensor[Pin]);//SCANTIME
@@ -62,19 +16,70 @@ void SendPinSetting(int Pin,int Set)
       simpleSysex(0x02,Pin,0x07,XtalkGroupSensor[Pin]);//XTALKGROUP
       simpleSysex(0x02,Pin,0x08,CurveFormSensor[Pin]);//CURVEFORM
       simpleSysex(0x02,Pin,0x09,ChokeNoteSensor[Pin]);//CHOKE
-      simpleSysex(0x02,Pin,0x0A,DualSensor[Pin]);//DUAL
+      simpleSysex(0x02,Pin,0x0A,DualSensor(Pin));//DUAL
       //simpleSysex(0x02,Pin,0x0B,DualNoteSensor[Pin]);//DUALNOTE
       //simpleSysex(0x02,Pin,0x0C,DualThresoldSensor[Pin]);//DUALTHRESOLD
       simpleSysex(0x02,Pin,0x0D,TypeSensor[Pin]);//TYPE
+      #if ENABLE_CHANNEL
       simpleSysex(0x02,Pin,0x0E,ChannelSensor[Pin]);//CHANNEL
+      #endif
       return;
-    break;
   } 
  
-  simpleSysex(0x02,Pin,Set,Value); 
+  simpleSysex(0x02,Pin,Set,GetPinSetting(Pin,Set)); 
+}
+byte GetPinSetting(byte Pin,byte Set)
+{
+  byte Value=0;
+  switch(Set)
+  {
+    case NOTE:
+      Value=NoteSensor[Pin];
+    break;
+    case THRESOLD:
+      Value=ThresoldSensor[Pin];
+    break;
+    case SCANTIME:
+      Value=ScanTimeSensor[Pin];
+    break;
+    case MASKTIME:
+      Value=MaskTimeSensor[Pin];
+    break;
+    case RETRIGGER:
+      Value=RetriggerSensor[Pin];
+    break;
+    case CURVE:
+      Value=CurveSensor[Pin];
+    break;
+    case XTALK:
+      Value=XtalkSensor[Pin];
+    break;
+    case XTALKGROUP:
+      Value=XtalkGroupSensor[Pin];
+    break;
+    case CURVEFORM:
+      Value=CurveFormSensor[Pin];
+    break;
+    case CHOKENOTE:
+      Value=ChokeNoteSensor[Pin];
+      break;
+    case DUAL:
+      Value=DualSensor(Pin);
+      break;    
+    case TYPE:
+      Value=TypeSensor[Pin];
+      break;
+    case CHANNEL:
+    #if ENABLE_CHANNEL
+      Value=ChannelSensor[Pin];
+    #endif
+      break; 
+  } 
+ 
+  return Value;
 }
 
-void SendHHSetting(int Set)
+void SendHHSetting(byte Set)
 {
     byte Value=0;
     if(Set==0x7F)
@@ -102,7 +107,7 @@ void SendHHSetting(int Set)
    simpleSysex(0x02,0x4C,Set,Value);
 }
 
-void SendGeneralSetting(int Set)
+void SendGeneralSetting(byte Set)
 {
   byte Value=0;
    switch(Set)
@@ -211,21 +216,21 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         {
            switch(Data2)
           {
-            case 0x00: NoteSensor[Data1]=Data3; break; //NOTE
-            case 0x01: ThresoldSensor[Data1]=Data3; break; //THRESOLD
-            case 0x02: ScanTimeSensor[Data1]=Data3; break; //SCANTIME
-            case 0x03: MaskTimeSensor[Data1]=Data3; break; //MASKTIME
-            case 0x04: RetriggerSensor[Data1]=Data3; break; //RETRIGGER
-            case 0x05: CurveSensor[Data1]=Data3; break; //CURVE
-            case 0x06: XtalkSensor[Data1]=Data3; break; //XTALK
-            case 0x07: XtalkGroupSensor[Data1]=Data3; break; //XTALKGROUP
-            case 0x08: CurveFormSensor[Data1]=Data3; break; //CURVEFORM
-            case 0x09: ChokeNoteSensor[Data1]=Data3; break; //CHOKE
+            case NOTE: NoteSensor[Data1]=Data3; break;
+            case THRESOLD: ThresoldSensor[Data1]=Data3; break;
+            case SCANTIME: ScanTimeSensor[Data1]=Data3; break;
+            case MASKTIME: MaskTimeSensor[Data1]=Data3; break;
+            case RETRIGGER: RetriggerSensor[Data1]=Data3; break;
+            case CURVE: CurveSensor[Data1]=Data3; break;
+            case XTALK: XtalkSensor[Data1]=Data3; break;
+            case XTALKGROUP: XtalkGroupSensor[Data1]=Data3; break;
+            case CURVEFORM: CurveFormSensor[Data1]=Data3; break;
+            case CHOKENOTE: ChokeNoteSensor[Data1]=Data3; break;
             //case 0x0A: DualSensor[Data1]=Data3; break; //DUAL
-            //case 0x0B: DualNoteSensor[Data1]=Data3; break; //DUALNOTE
-            //case 0x0C: DualThresoldSensor[Data1]=Data3; break; //DUALTHRESOLD
-            case 0x0D: TypeSensor[Data1]=Data3; break; //TYPE
-            case 0x0E: ChannelSensor[Data1]=Data3; break; //CHANNEL
+            case TYPE: TypeSensor[Data1]=Data3; break;
+            #if ENABLE_CHANNEL
+            case CHANNEL: ChannelSensor[Data1]=Data3; break;
+            #endif
                          
           }
         }

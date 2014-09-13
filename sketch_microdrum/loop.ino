@@ -10,17 +10,19 @@ void loop()
   Menu();
   #endif
   
-  #if LICENSE
+
   if(Mode==OffMode)
   {
+    #if LICENSE
     //HANDSHAKE
     CheckLicense();
     delay(100);
+    #endif
     //Mode=StandbyMode;
     //NSensor=2;
     return;
   }
-  #endif
+
 
   //==========UNROLLING======
   //{0, 1, 3, 2, 6, 7, 5, 4}
@@ -77,41 +79,32 @@ void loop()
     //===============================
     //        Disabled, HHC
     //===============================
-    if(TS==127/*Disabled*/ || TS==2/*HHC*/) continue;
+    if(TS==Disabled || TS==HHC) continue;
  
     //===============================
     //        HH
     //===============================
-    if(TS==3/*HH*/)
+    if(TS==HH)
     {
-      byte HHC=DualSensor[i];
+      byte Hhc=DualSensor(i);
       
       //Foot Splash
-      if(MaxReadingSensor[HHC]>0 && MaxReadingSensor[HHC]>HHFootThresoldSensor[0])
+      if(StateSensor[Hhc]==FOOTSPLASH_TIME)
       {
-        if (Mode==MIDIMode) noteOn(ChannelSensor[i],HHFootNoteSensor[0],127);//127
-        MaxReadingSensor[HHC]=0;
+        if (Mode==MIDIMode) fastNoteOn(ChannelSensor[i],HHFootNoteSensor[0],127);//127
+        StateSensor[Hhc]=0;
       }
-      //FootClose
-      else if(MaxReadingSensor[HHC]<0 && -MaxReadingSensor[HHC]>HHFootThresoldSensor[1])
+      else if(StateSensor[Hhc]==FOOTCLOSE_TIME)
       {
-        if (Mode==MIDIMode) noteOn(ChannelSensor[i],HHFootNoteSensor[1],127);
-        MaxReadingSensor[HHC]=0;
+        if (Mode==MIDIMode) fastNoteOn(ChannelSensor[i],HHFootNoteSensor[1],127);
+        StateSensor[Hhc]=0;
       }
-    }
-    //===============================
-      
-    //==============SWITCH CHOKE=================
-    if((TS==1 /*Switch*/ || TS==5 /*YSwitch*/)&& ZeroCountSensor[i]>MaskTimeSensor[i]/*ChokeTime*/ && ZeroCountSensor[i]!=255) //Choke
-    {
-      if (Mode==MIDIMode) noteOn(ChannelSensor[i],ChokeNoteSensor[i],127);//127 //In caso di problemi si può impostare i al posto di 127 in modo da sapere quale pin da problemi
-      ZeroCountSensor[i]=255;
-      
       continue;
     }
     //===============================
     
-    if(MaxReadingSensor[i] <0) continue; //OTTIMIZZA
+    byte SS=StateSensor[i];
+    if(SS==NORMAL_TIME || SS==SCAN_TIME || SS==MASK_TIME || SS==RETRIGGER_TIME) continue;
 
     //=============XTALK==================
     if(Mode==ToolMode && Diagnostic==true) PlaySensorTOOLMode(i);
@@ -142,17 +135,46 @@ void loop()
 void PlaySensorMIDIMode(byte i)
 {
   //===============================
-  //         Switch
+  //        Single Switch
   //===============================
-  if(TypeSensor[i]==1)
-  {
-    //DUAL
-    /*if(DualSensor[i]!=127 && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[i]*4))
-      noteOn(ChannelSensor[i],DualNoteSensor[i],MaxReadingSensor[i]/8); //Dual
-    else*/
-      noteOn(ChannelSensor[i],NoteSensor[i],MaxReadingSensor[i]/8);
+  if(TypeSensor[i]==SWITCH)
+  { 
+    /*if(TypeSensor[DualSensor(i)]==SWITCH) //Switch-Switch
+    { 
+      fastNoteOn(ChannelSensor[i],NoteSensor[i],MaxReadingSensor[i]/8);
     
-    MaxReadingSensor[i] = -1;
+      #if WAVTRIGGER
+      wavTrigger(i,MaxReadingSensor[i]/8);
+      #endif
+            
+      MaxReadingSensor[i] = -1;
+    }
+    else if(TypeSensor[DualSensor(i)]==Disabled) //Switch-Disabled
+    {
+      
+    }*/
+    if(StateSensor[i]==SWITCH_TIME)
+    {
+      fastNoteOn(ChannelSensor[i],NoteSensor[i],127);//MaxReadingSensor[i]*18);
+    
+      #if WAVTRIGGER
+      wavTrigger(i,126);//MaxReadingSensor[i]*18);
+      #endif
+           
+      StateSensor[i]=MASK_TIME;
+      MaxReadingSensor[i] = -1;
+    }
+    else if(StateSensor[i]==CHOKE_TIME) //Choke
+    {
+      fastNoteOn(ChannelSensor[i],ChokeNoteSensor[i],127);
+      
+      #if WAVTRIGGER
+      wavChoke(i);
+      #endif
+      
+      StateSensor[i]=MASK_TIME;
+      MaxReadingSensor[i] = -1;
+    }
     return;
   }
   //===============================
@@ -165,15 +187,17 @@ void PlaySensorMIDIMode(byte i)
   if(TypeSensor[i]==5)
   {
     if(MaxReadingSensor[i] <= 512)
-      noteOn(ChannelSensor[i],NoteSensor[i],min(127,MaxReadingSensor[i]*8));
+    {
+      fastNoteOn(ChannelSensor[i],NoteSensor[i],min(127,MaxReadingSensor[i]*8));
+    }
     else
       //noteOn(ChannelSensor[i],DualNoteSensor[i],min(127,(MaxReadingSensor[i]-512)*8));//DUAL
-      noteOn(ChannelSensor[i],DualSensor[i],min(127,(MaxReadingSensor[i]-512)*8));
+      fastNoteOn(ChannelSensor[i],DualSensor(i),min(127,(MaxReadingSensor[i]-512)*8));
           
-    if(DualSensor[i]!=127)//Dual
+    if(DualSensor(i)!=127)//Dual
     {
-      MaxReadingSensor[DualSensor[i]]=-1;
-      TimeSensor[DualSensor[i]]=Time-ScanTimeSensor[DualSensor[i]];
+      MaxReadingSensor[DualSensor(i)]=-1;
+      TimeSensor[DualSensor(i)]=Time-ScanTimeSensor[DualSensor(i)];
     }
     
     MaxReadingSensor[i] = -1;
@@ -182,84 +206,68 @@ void PlaySensorMIDIMode(byte i)
   //===============================
   
   //====================================================================
-  if ((Time-TimeSensor[i]) >= ScanTimeSensor[i] /*|| TypeSensor[i]==1*/)
-  {    
-    //if (MaxReadingSensor[i] > ThresoldSensor[i])//ATTENZIONE SECONDO ME E' RIDONDANTE
-    {
-      //Dual
-      if(DualSensor[i]!=127 && TypeSensor[i]!=3/*HH*/)
+  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ StateSensor[i]==PIEZO_TIME)
+  {          
+      //Piezo
+      if(/*DualSensor(i)!=127 &&*/ TypeSensor[i]==PIEZO)
       {
-        //Piezo-Piezo
-        if(TypeSensor[DualSensor[i]]==0) //Piezo-Piezo
+        byte v=UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]);
+          
+        #if WAVTRIGGER
+        wavTrigger(i,v);
+        #endif
+          
+        fastNoteOn(ChannelSensor[i],NoteSensor[i],v);
+        
+        StateSensor[i]=MASK_TIME;
+              
+        //Piezo-Switch
+        if(TypeSensor[DualSensor(i)]==SWITCH && StateSensor[DualSensor(i)]==SWITCH_TIME )
         {
-          //DUAL
-          if(MaxReadingSensor[DualSensor[i]]>MaxReadingSensor[i])
-          {
-            MaxReadingSensor[i]=-1;
-            return;
-          }
-          else
-          {
-            noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
-            MaxReadingSensor[DualSensor[i]]=-1;  //Dual XTalk
-          }
-          /*if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
-            noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i] ));
-          else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
-            noteOn(ChannelSensor[i],NoteSensor[DualSensor[i]],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]] ));
-          else if(MaxReadingSensor[i]> (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]>(DualThresoldSensor[DualSensor[i]]*4))
-            noteOn(ChannelSensor[i],DualNoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i] ));
-          else if(MaxReadingSensor[i]<= (DualThresoldSensor[i]*4) && MaxReadingSensor[DualSensor[i]]<=(DualThresoldSensor[DualSensor[i]]*4))
-            noteOn(ChannelSensor[i],DualNoteSensor[DualSensor[i]],UseCurve(CurveSensor[DualSensor[i]],MaxReadingSensor[DualSensor[i]],CurveFormSensor[DualSensor[i]] ));
-            */
-        }
-        else if(TypeSensor[DualSensor[i]]==1)//Piezo-Switch
+              fastNoteOn(ChannelSensor[DualSensor(i)],NoteSensor[DualSensor(i)],127);
+    
+              #if WAVTRIGGER
+              wavTrigger(DualSensor(i),126);
+              #endif
+            
+              StateSensor[DualSensor(i)]=MASK_TIME;
+              MaxReadingSensor[DualSensor(i)] = -1;
+         }
+         /*
+         else if(TypeSensor[DualSensor(i)]==PIEZO && MaxReadingSensor[DualSensor(i)]> ThresoldSensor[DualSensor(i)]) //Piezo-Piezo
         {
-          if(MaxReadingSensor[DualSensor[i]]<0 || ZeroCountSensor[DualSensor[i]]>0)
-          {
-            noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
-            MaxReadingSensor[i] = -1;
-          } 
-          else
-           {
-             MaxReadingSensor[i] = -1;
-             //Lo mettiamo in mask
-             TimeSensor[i]=Time-ScanTimeSensor[i];
-           }   
-          return;
-        }
-        else
-          noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
+            byte v=UseCurve(CurveSensor[DualSensor(i)],MaxReadingSensor[DualSensor(i)],CurveFormSensor[DualSensor(i)]);
+            #if WAVTRIGGER
+             wavTrigger(DualSensor(i),v);
+            #endif
+            fastNoteOn(ChannelSensor[DualSensor(i)],NoteSensor[DualSensor(i)],v);
+            
+            MaxReadingSensor[DualSensor(i)]=-1;  //Dual XTalk
+          
+        }*/
       }
-      else //Mono========================================
+      else //HH========================================
       {
-          if(TypeSensor[i]==3/*HH*/)
-          {
-             byte Note=NoteSensor[i];
-             byte HHC=DualSensor[i];
+        byte Note=NoteSensor[i];
+        byte Hhc=DualSensor(i);
              
              //if(ZeroCountSensor[HHC]>DualThresoldSensor[i])//DUAL
-             if(ZeroCountSensor[HHC]>HHCTHRESOLD)
+             if(MaxReadingSensor[Hhc]>HHCTHRESOLD)
                Note=ChokeNoteSensor[i];
-             else if(ZeroCountSensor[HHC]>HHThresoldSensor[3])
+             else if(MaxReadingSensor[Hhc]>HHThresoldSensor[3])
                Note=HHNoteSensor[3];
-             else if(ZeroCountSensor[HHC]>HHThresoldSensor[2])
+             else if(MaxReadingSensor[Hhc]>HHThresoldSensor[2])
                Note=HHNoteSensor[2];
-             else if(ZeroCountSensor[HHC]>HHThresoldSensor[1])
+             else if(MaxReadingSensor[Hhc]>HHThresoldSensor[1])
                Note=HHNoteSensor[1];
-             else if(ZeroCountSensor[HHC]>HHThresoldSensor[0])
+             else if(MaxReadingSensor[Hhc]>HHThresoldSensor[0])
                Note=HHNoteSensor[0];
 
-             noteOn(ChannelSensor[i],Note,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
-
-          }
-          else
-             noteOn(ChannelSensor[i],NoteSensor[i],UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
-      }//Mono=======================
-    }//Thresold
+        fastNoteOn(ChannelSensor[i],Note,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
+      }//HH=======================
                
     MaxReadingSensor[i] = -1;
-  }//ScanTime
+  }
 }
 
 
@@ -275,31 +283,67 @@ void CheckMulti(byte Sensor,byte count)
   //int sensorReading = analogRead(Sensor); 
   int yn_0 = -1;
 
-  byte State=0;
-  
   //===============================
   //        HHC
   //===============================
-  if(TypeSensor[MulSensor]==2/*HHC*/) { CheckHHControl(MulSensor,analogRead(Sensor)/8); return; }
+  if(TypeSensor[MulSensor]==HHC) { CheckHHControl(MulSensor,analogRead(Sensor)/8); return; }
     
   //===============================
   //        Switch
   //===============================
-  if(TypeSensor[MulSensor]==1)
+  if(TypeSensor[MulSensor]==SWITCH)
   {
     yn_0 = analogRead(Sensor);
-      
-    if(yn_0==0 /*&& yn_1[MulSensor]==0 && yn_2[MulSensor]==0*/ /*ZZZ*/)  
+    
+     //DrawDiagnostic(MulSensor,yn_0/8);
+    if(StateSensor[MulSensor]==NORMAL_TIME) 
     {
-      if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
-    }
-    else
-    {
-      if(ZeroCountSensor[MulSensor]!=255 && ZeroCountSensor[MulSensor]>ScanTimeSensor[MulSensor]) //SwitchTime
+      if(yn_0<ThresoldSensor[MulSensor]*10 && yn_1[MulSensor]<ThresoldSensor[MulSensor]*10 )  
       {
-        MaxReadingSensor[MulSensor] = ZeroCountSensor[MulSensor]*100;
+        //DrawDiagnostic(MulSensor,0);
+      
+        StateSensor[MulSensor]=SCAN_TIME;
+        MaxReadingSensor[MulSensor]=0;
       }
-      ZeroCountSensor[MulSensor]=0; 
+    }
+    
+    if(StateSensor[MulSensor]==SCAN_TIME) 
+    {      
+      if(yn_0<ThresoldSensor[MulSensor]*10 && yn_1[MulSensor]<ThresoldSensor[MulSensor]*10 )  
+        MaxReadingSensor[MulSensor]=MaxReadingSensor[MulSensor]+1;
+      else
+      {
+        if(MaxReadingSensor[MulSensor]>ScanTimeSensor[MulSensor])
+        {
+          StateSensor[MulSensor]=SWITCH_TIME;
+          MaxRetriggerSensor[MulSensor] = RetriggerSensor[MulSensor];
+        }
+        else
+        {
+          StateSensor[MulSensor]=NORMAL_TIME;
+        }
+      }
+      
+      if(MaxReadingSensor[MulSensor]>MaskTimeSensor[MulSensor])
+      {
+          StateSensor[MulSensor]=CHOKE_TIME;
+          MaxRetriggerSensor[MulSensor] = RetriggerSensor[MulSensor];
+      }
+    }
+    
+    if(StateSensor[MulSensor]==MASK_TIME)  
+    { 
+      //if(ZeroCountSensor[MulSensor]>0) DrawDiagnostic(MulSensor,ZeroCountSensor[MulSensor]*16);
+      if(MaxRetriggerSensor[MulSensor] > 0)
+      {
+        MaxRetriggerSensor[MulSensor]=MaxRetriggerSensor[MulSensor]-1;
+        //DrawDiagnostic(MulSensor,128);
+      }
+      else
+      {
+        if(yn_0>=ThresoldSensor[MulSensor]*10 && yn_1[MulSensor]>=ThresoldSensor[MulSensor]*10 ) 
+          StateSensor[MulSensor]=NORMAL_TIME;
+      }
     }
   }
   //===============================
@@ -311,108 +355,140 @@ void CheckMulti(byte Sensor,byte count)
     
     if(yn_0<ThresoldSensor[MulSensor]*4 )
     {
-      if(ZeroCountSensor[MulSensor]!=255) ZeroCountSensor[MulSensor]=ZeroCountSensor[MulSensor]+1;
+      StateSensor[MulSensor]=SCAN_TIME;
+      
+      if(MaxReadingSensor[MulSensor]<=MaskTimeSensor[MulSensor]) 
+        MaxReadingSensor[MulSensor]=MaxReadingSensor[MulSensor]+1;
     }
     else
     {
-      if(ZeroCountSensor[MulSensor]!=255 && ZeroCountSensor[MulSensor]>ScanTimeSensor[MulSensor]) //SwitchTime
+      if(MaxReadingSensor[MulSensor]!=255 && MaxReadingSensor[MulSensor]>ScanTimeSensor[MulSensor]) //SwitchTime
       {
         ///DUAL
         //if(yn_0>DualThresoldSensor[MulSensor]*4)
         if(yn_0>CurveFormSensor[MulSensor]*4)
-          MaxReadingSensor[MulSensor] = ZeroCountSensor[MulSensor];
+          MaxReadingSensor[MulSensor] = MaxReadingSensor[MulSensor];
         else
-          MaxReadingSensor[MulSensor] = 512+ZeroCountSensor[MulSensor];
+          MaxReadingSensor[MulSensor] = 512+MaxReadingSensor[MulSensor];
       }
-      ZeroCountSensor[MulSensor]=0; 
+      StateSensor[MulSensor]=SWITCH_TIME; 
     }
   }
   //===============================
   //        Piezo, HH
   //===============================
-  else //ATTENZIONE QUESTO POTREBBE DIVENTARE IL PRIMO IF DATO CHE E' IL PIU' PROBABILE
+  else
   {
     Time=TIMEFUNCTION;
-    if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
-    {
-      State=1;//ScanTime
-      yn_0 = (analogRead(Sensor)*(int)ChokeNoteSensor[MulSensor])/64;
-      
-      if(yn_0 > MaxReadingSensor[MulSensor])
-      {
-        MaxReadingSensor[MulSensor] = yn_0;
-        
-	MaxRetriggerSensor[MulSensor]=(yn_0 > RetriggerSensor[MulSensor])?(yn_0 - RetriggerSensor[MulSensor]):0;
-        
-        if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==-1 || MaxXtalkGroup[XtalkGroupSensor[MulSensor]]<yn_0) //MaxGroup
-          MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=yn_0;
-          
-        if(MaxMultiplexerXtalk[count]==-1 || MaxMultiplexerXtalk[count]<yn_0)
-           MaxMultiplexerXtalk[count]=yn_0;
-      }
-    } 
-    else
-    {
-      State=2;//MaskTime
+    
+    if(StateSensor[MulSensor]==MASK_TIME)  
+    { 
       if ((Time-TimeSensor[MulSensor])>MaskTimeSensor[MulSensor])
       {
-        yn_0 = (analogRead(Sensor)*(int)ChokeNoteSensor[MulSensor])/64;
-        if((Time-TimeSensor[MulSensor])<2*MaskTimeSensor[MulSensor])
-        {
-          State=3;//RetriggerTime
+        StateSensor[MulSensor]=RETRIGGER_TIME;
+      }
+    }
+    
+    yn_0 = (analogRead(Sensor)*(int)ChokeNoteSensor[MulSensor])/64;
+    
+        
+    if(StateSensor[MulSensor]==RETRIGGER_TIME)
+    {
+      if(MaxRetriggerSensor[MulSensor]>=0)//(Time-TimeSensor[MulSensor])<3*MaskTimeSensor[MulSensor])
+      {
           if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor[MulSensor])
           {
-            State=1;//ScanTime
+            StateSensor[MulSensor]=SCAN_TIME;
             TimeSensor[MulSensor]=Time;
-            MaxReadingSensor[MulSensor] = yn_0;
+            MaxReadingSensor[MulSensor] = 0;
           }
-        }
-        else
+          else MaxRetriggerSensor[MulSensor]=(MaxRetriggerSensor[MulSensor]-RetriggerSensor[MulSensor]-1)>0?(MaxRetriggerSensor[MulSensor]-RetriggerSensor[MulSensor]-1):0;
+      }
+      else
+      {
+          StateSensor[MulSensor]=NORMAL_TIME;
+      }
+    }
+    
+    if(StateSensor[MulSensor]==NORMAL_TIME) 
+    {
+      if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor]) 
+      {
+        StateSensor[MulSensor]=SCAN_TIME;
+        TimeSensor[MulSensor]=Time;
+        MaxReadingSensor[MulSensor] = 0;
+      }
+    }
+    
+    if(StateSensor[MulSensor]==SCAN_TIME) 
+    {
+      if ((Time-TimeSensor[MulSensor]) < ScanTimeSensor[MulSensor])
+      {
+        if(yn_0 > MaxReadingSensor[MulSensor])
         {
-          State=0;//NormalTime
-          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor]) { TimeSensor[MulSensor]=Time; MaxReadingSensor[MulSensor] = yn_0; State=1;}//ScanTime
+          MaxReadingSensor[MulSensor] = yn_0;
+	  MaxRetriggerSensor[MulSensor] = yn_0;//(yn_0 > RetriggerSensor[MulSensor])?(yn_0 - RetriggerSensor[MulSensor]):0;
+        
+          if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==-1 || MaxXtalkGroup[XtalkGroupSensor[MulSensor]]<yn_0) //MaxGroup
+            MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=yn_0;
+          
+          if(MaxMultiplexerXtalk[count]==-1 || MaxMultiplexerXtalk[count]<yn_0)
+            MaxMultiplexerXtalk[count]=yn_0;
         }
       }
-      //else MaxReadingSensor[MulSensor] = -1;
+      else
+      {
+        StateSensor[MulSensor]=PIEZO_TIME;
+      }
     }
   }
   
   //====================================
   //TOOL
   //====================================
-  if(Mode==ToolMode && LogPin==MulSensor)
-  {
-    N++;
-    if(yn_0>=(LogThresold*2)) 
-      SendLog(MulSensor,N,yn_0,MaxRetriggerSensor[MulSensor],MaxReadingSensor[MulSensor],State);
-  }
+  if(Mode==ToolMode && LogPin==MulSensor) LogTool(yn_0,MulSensor);
   //====================================
   
   yn_1[MulSensor]=yn_0;
 
 }
 
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    CHECKHHCONTROL
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void CheckHHControl(byte HHControl,byte sensorReading)
 {
-   if ((Time-TimeSensor[HHControl]) > MaskTimeSensor[HHControl])
+  if ((Time-TimeSensor[HHControl]) > MaskTimeSensor[HHControl])
+  {
+    if(sensorReading>(/*yn_1*/MaxReadingSensor[HHControl]+HHCTHRESOLD) || sensorReading<(/*yn_1*/MaxReadingSensor[HHControl]-HHCTHRESOLD))
     {
-      if(sensorReading>(/*yn_1*/ZeroCountSensor[HHControl]+HHCTHRESOLD) || sensorReading<(/*yn_1*/ZeroCountSensor[HHControl]-HHCTHRESOLD))
+      if (Mode==MIDIMode)
       {
-        if (Mode==MIDIMode) midiCC(ChannelSensor[HHControl],NoteSensor[HHControl],sensorReading);
+        #if WAVTRIGGER
+        wavTriggerHHC(sensorReading);
+        #endif
         
-        float m=((float)ZeroCountSensor[HHControl]-(float)sensorReading)/((float)TimeSensor[HHControl]-(float)Time);
-
-        MaxReadingSensor[HHControl]=m*100;
-               
-        ZeroCountSensor[HHControl]=sensorReading;//LastReading
-        //yn_1[HHControl]=sensorReading;
-        
-        TimeSensor[HHControl]=Time;
+        fastMidiCC(ChannelSensor[HHControl],NoteSensor[HHControl],sensorReading);
       }
+      else if(Mode==ToolMode && Diagnostic==true)
+        simpleSysex(0x6F,HHControl,sensorReading,0);
+        
+      float m=(((float)MaxReadingSensor[HHControl]-(float)sensorReading)/((float)TimeSensor[HHControl]-(float)Time))*100;
+
+      MaxReadingSensor[HHControl]=sensorReading;//LastReading
+        
+      //Foot Splash
+      if(m>0 && m>HHFootThresoldSensor[0])
+        StateSensor[HHControl]=FOOTSPLASH_TIME;
+
+      //FootClose
+      else if(m<0 && -m>HHFootThresoldSensor[1])
+        StateSensor[HHControl]=FOOTCLOSE_TIME;
+
+      TimeSensor[HHControl]=Time;
     }
+  }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -438,6 +514,7 @@ byte UseCurve(byte Curve,int Value,byte Form)
   if(ret>=127) return 127;//127
   return ret;
 }
+
 
 
 

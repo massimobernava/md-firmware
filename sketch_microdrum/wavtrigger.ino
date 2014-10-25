@@ -5,6 +5,7 @@
 #if WAVTRIGGER
 
 #define MAX_POLYPHONIC 15
+#define VOLUME_SCALE 3
 
 /*
 A1 Snare
@@ -384,7 +385,7 @@ void wavTrigger_BM(byte pin, byte velocity)
     //Analogue Drums
     //FORSE UNO SWITCH ELIMINEREBBE I PROBLEMI DI APPROSSIMAZIONE
     int n=start+/*floor*/(count*velocity/127)+RR*count;
-    int vol=(int)((short)velocity-127)/6;
+    int vol= -0.5 + (float)((float)velocity-127.0)/VOLUME_SCALE;
     wavTriggerPlay(n,vol);
     RR=(RR+1)%ROUND_ROBIN_BM;
     
@@ -431,7 +432,7 @@ void wavTrigger_BX(byte pin, byte velocity)
     }
     //Analogue Drums
     int n=start+/*floor*/(count*velocity/127)+RR*count;
-    int vol=(int)((short)velocity-127)/6;
+    int vol= -0.5 + (float)((float)velocity-127.0)/VOLUME_SCALE;
     wavTriggerPlay(n,vol);
     RR=(RR+1)%ROUND_ROBIN_BX;
     
@@ -477,7 +478,7 @@ void wavTrigger_FS(byte pin, byte velocity)
     }
     //Analogue Drums
     int n=start+/*floor*/(count*velocity/127)+RR*count;
-    int vol=(int)((short)velocity-127)/6;
+    int vol= -0.5 + (float)((float)velocity-127.0)/VOLUME_SCALE;
     wavTriggerPlay(n,vol);
     RR=(RR+1)%ROUND_ROBIN_FS;
     

@@ -89,92 +89,160 @@ byte PearsonHash(byte* in,byte size)
 void LogTool(int yn_0,byte MulSensor)
 {
    #if MENU_LOG
-   //autodeterminazione del rumore massimo Nmax in un intervallo fisso di 5s
-    if(log_state==0)
+   //FASE 1: autodeterminazione del rumore massimo Nmax in un intervallo fisso di 20s
+    if(log_state==0)//FASE 1: AVVIO
     {
       log_T1=TIMEFUNCTION;
       log_Nmax=yn_0;
       log_state=1;
+      
+      d_hsum=0;
+      d_tsum=0;
+      d_tnum=0;
+      d_rmax=0;
+      d_vmax=0;
+      d_vmin=1024;
+      
+      N=0;
+      
+      //WAIT
+      DrawLog(0);
+      //GAIN=64 attenzione
     }
-    else if(log_state==1)
+    else if(log_state==1)//FASE 1: ANALISI
     {
       if(yn_0>log_Nmax) log_Nmax=yn_0;
-      if((log_T1+10000)<TIMEFUNCTION) log_state=2;
+      if((log_T1+20000)<TIMEFUNCTION) //20sec
+      {
+        log_state=2;
+      
+        if(d_tnum<25) DrawLog(1); //25 hit
+        else DrawLog(2);
+     }
     }
-    else if(log_state==2)
+    else if(log_state==2) //FASE 1: FINE
     {
-      DrawLog(0);
+      //DrawLog(0);
+      
+      //FASE 2: analisi del segnale per 1s
       if(yn_0>log_Nmax)
       {
-        log_T1=TIMEFUNCTION;
+        //Wait
+        DrawLog(0);
+        N++;
+        log_Tmax=log_T1=TIMEFUNCTION; //FASE 2: INIZIO
         log_state=3;
-        log_Vmax=0;
-        log_note=0;
+        log_Vmax=yn_0;
+        //log_note=0;
       }
     }
     else if(log_state==3)
     {
-      if(log_oldState==0 && StateSensor[MulSensor]==1) log_note++;
-      log_oldState=StateSensor[MulSensor];
+      //if(log_oldState==0 && StateSensor[MulSensor]==SCAN_TIME) log_note++; //Numero di Scan
+      //log_oldState=StateSensor[MulSensor];
     
       if(yn_0>log_Nmax)
       {
-        DrawLog(0);
-        log_T2=TIMEFUNCTION;
+        //DrawLog(0);
+        N++;
+        //log_T2=TIMEFUNCTION; //Dopo quanto tempo scende sotto la soglia
         if(yn_0>log_Vmax)
         {
           log_Vmax=yn_0;
-          log_Tmax=log_T2;
+          log_Tmax=TIMEFUNCTION;
 
-          log_T80=0;
+          /*log_T80=0;
           log_T70=0;
-          log_T60=0;
+          log_T60=0;*/
           log_T50=0;
-          log_T40=0;
+          /*log_T40=0;
           log_T30=0;
-          log_T20=0;
+          log_T20=0;*/
         }
         else
         {
-          //if(((yn_0-log_VMax)/(log_T2-log_Tmax))>log_Dmax)
-          //  log_Dmax=((yn_0-log_VMax)/(log_T2-log_Tmax));
-          if(yn_0>(int)((float)log_Vmax*0.8))
+          /*if(yn_0>(int)((float)log_Vmax*0.8))
             log_T80=log_T2;
           else if(yn_0>(int)((float)log_Vmax*0.7))
             log_T70=log_T2;
           else if(yn_0>(int)((float)log_Vmax*0.6))
             log_T60=log_T2;
-          else if(yn_0>(int)((float)log_Vmax*0.5))
-            log_T50=log_T2;
-          else if(yn_0>(int)((float)log_Vmax*0.4))
+          else */
+          if(yn_0>(int)((float)log_Vmax*0.5))
+            log_T50=TIMEFUNCTION;
+          /*else if(yn_0>(int)((float)log_Vmax*0.4))
             log_T40=log_T2;
           else if(yn_0>(int)((float)log_Vmax*0.3))
             log_T30=log_T2;
           else if(yn_0>(int)((float)log_Vmax*0.2))
-            log_T20=log_T2;
+            log_T20=log_T2;*/
           }
       }
-      if((TIMEFUNCTION-log_T1)>1000)
+      
+      //1 sec
+      if((TIMEFUNCTION-log_T1) > 1000)//FASE 2: FINE
       {
         log_state=4;
-        N=0;
+        //N=0;
+        
+        //if((log_Tmax-log_T1) > d_tmax) d_tmax=(log_Tmax-log_T1);
+        d_hsum+=(log_T50==0?0:log_T50-log_Tmax);
+        d_tsum+=(log_Tmax-log_T1);
+        d_tnum++;
+        
+        if(((log_Vmax-log_Nmax)/N)>d_rmax) d_rmax=((log_Vmax-log_Nmax)/N);
+        if(log_Vmax>d_vmax) d_vmax=log_Vmax;
+        if(log_Vmax<d_vmin) d_vmin=log_Vmax;
+        
+        if(d_tnum<25) DrawLog(1);
+        else if(d_tnum<50) DrawLog(2);
+        else DrawLog(3);
       }
     }
-    else if(log_state==4)
+    else if(log_state==4) //FASE 3: report
     {
-      if(N==0) DrawLog(0);
-      else if(N==2000) DrawLog(1);
-      else if(N==4000) DrawLog(2);
-      else if(N==6000) DrawLog(3);
+      /*if(log_Show==0) DrawLog(0);
+      else if(log_Show==4000) DrawLog(1);
+      else if(log_Show==8000) DrawLog(2);
+      //else if(log_Show==12000) DrawLog(3);
     
-      N++;
-      if(N==8000) N=0;
-      if(yn_0>log_Nmax)
+      log_Show++;
+      if(log_Show==12000) log_Show=0;*/
+      
+      if(d_tnum==25)
       {
+        ChokeNoteSensor[MulSensor]=(40.0/(float)d_vmin)*64.0; //GAIN
+        
         log_T1=TIMEFUNCTION;
+        log_Nmax=0;
+        log_state=1;
+      
+        d_rmax=0;
+        d_vmax=0;
+      
+        N=0;
+      
+        //WAIT
+        DrawLog(0);
+      }
+      else if(d_tnum==50)
+     {
+       ThresoldSensor[MulSensor]=log_Nmax;
+       ScanTimeSensor[MulSensor]=(d_tsum/d_tnum);
+       MaskTimeSensor[MulSensor]=(d_hsum/d_tnum);
+       RetriggerSensor[MulSensor]=d_rmax;
+       CurveFormSensor[MulSensor]=(1024/d_vmax)*64;
+       CurveSensor[MulSensor]=0; 
+     }
+     else if(yn_0>log_Nmax) //FASE 2: INIZIO
+      {
+        log_Tmax=log_T1=TIMEFUNCTION;
         log_state=3;
-        log_Vmax=0;
-        log_note=0;
+        log_Vmax=yn_0;
+        //log_note=0;
+         N=0;
+         
+         DrawLog(0);
       }
     }
   #else

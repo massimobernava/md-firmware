@@ -389,7 +389,7 @@ void CheckMulti(byte Sensor,byte count)
       }
     }
     
-    yn_0 = (analogRead(Sensor)*(int)ChokeNoteSensor[MulSensor])/64;
+    yn_0 = 0.5 + ((float)analogRead(Sensor)*(float)ChokeNoteSensor[MulSensor])/64.0;  //GAIN
     
         
     if(StateSensor[MulSensor]==RETRIGGER_TIME)
@@ -492,24 +492,50 @@ void CheckHHControl(byte HHControl,byte sensorReading)
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//    USECURVE beta version
+//    USECURVE
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//const float X[9]={0, 128, 256, 384, 512, 640, 768, 896, 1024};
+const float Exp[9]={2.33, 3.85, 6.35, 10.48, 17.28, 28.5, 46.99 , 77.47, 127.74}; //e^((x/256)+0,85)
+const float Log[9]={0, 83.67, 98.23, 106.74, 112.78, 117.47, 121.30 , 124.53, 127.34}; //21*ln(0,42*x)
+const float Sigma[9]={2.28, 6.02, 15.13, 34.15, 63.5, 92.84, 111.86 , 120.97, 127.71}; //128/(1+e^((512-x)/128))
+const float Flat[9]={0, 32.86, 46.42, 55.82, 64.0, 72.17, 81.57 , 95.13, 127}; //64-16*ln((1024/x)-1)
+
 byte UseCurve(byte Curve,int Value,byte Form)
 {
   int ret=0;
- 
-  float x=(float)Value;
+  //float Xn=(float)Value;
   float f=((float)Form)/64.0;//[1;127]->[0.;2.0]
-
-  switch(Curve)
+    
+  if(Curve==0)
+  {
+    ret=0.5 + ((float)Value*f/8.0);
+  }
+  else
+  {
+    int i=Value/128;
+    int m=Value % 128;
+    
+    switch(Curve)
+    {
+      case 1: ret = 0.5 + (((float)m*(Exp[i+1]-Exp[i])/128.0) + Exp[i])*f; break;
+      case 2: ret = 0.5 + (((float)m*(Log[i+1]-Log[i])/128.0) + Log[i])*f; break;
+      case 3: ret = 0.5 + (((float)m*(Sigma[i+1]-Sigma[i])/128.0) + Sigma[i])*f; break;
+      case 4: ret = 0.5 + (((float)m*(Flat[i+1]-Flat[i])/128.0) + Flat[i])*f; break;
+      
+      default: ret = i*16; break;//Test mode
+    }
+  }
+  
+  /*switch(Curve)
   {
     //[0-1023]x[0-127]
-    case 0: ret=x*f/8.0; break;
+    case 0: ret=0.5 + (x*f/8.0); break;
     case 1: ret=(127.0/(exp(2.0*f)-1))*(exp(f*x/512.0)-1.0);break; //Exp 4*(exp(x/256)-1)
     case 2: ret=log(1.0+(f*x/128.0))*(127.0/log((8*f)+1));break; //Log 64*log(1+x/128)
     case 3: ret=(127.0/(1.0+exp(f*(512.0-x)/64.0)));break; //Sigma
     case 4: ret=(64.0-((8.0/f)*log((1024/(1+x))-1)));break; //Flat
-  }
+  }*/
+  
   if(ret<=0) return 0;
   if(ret>=127) return 127;//127
   return ret;

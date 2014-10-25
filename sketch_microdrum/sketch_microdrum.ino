@@ -1,12 +1,12 @@
 
 //=====================================================================================
-//=>            microDRUM firmware v1.2.1
+//=>            microDRUM firmware v1.2.2
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2014-09-13
+//=> 2014-10-25
 //=====================================================================================
 
 //========CONFIGURE=============
@@ -20,8 +20,8 @@
 #define WAVTRIGGER 1
 #define WT_16 1
 //#define WT_24 1
-#define ENABLE_CHANNEL 1
-#define MENU_LOG 0
+#define ENABLE_CHANNEL 0
+#define MENU_LOG 1
 //==============================
 
 #if defined(__arm__) 
@@ -33,7 +33,7 @@
 #if WAVTRIGGER
 #include <SoftwareSerial.h>
 #endif
-#include <math.h>
+//#include <math.h>
 
 #if MENU
 #include <LiquidCrystal.h>
@@ -136,24 +136,35 @@ bool Diagnostic=false;
 
 #if MENU_LOG
 byte log_state=0;
-unsigned long log_T1=0;
-unsigned long log_T2=0;
 
-unsigned long log_Tmax=0;
+byte log_Nmax=0;  //Max noise
 
-int log_Vmax=0;
-byte log_Nmax=0;
 
-byte log_note=0;
-byte log_oldState=0;
+unsigned long log_T1=0; //Start hit time
+//unsigned long log_T2=0;
+unsigned long log_Tmax=0;  //Max hit time
+int log_Vmax=0;   //Max hit value
 
-unsigned long log_T80=0;
+
+//byte log_note=0;
+//byte log_oldState=0;
+//short log_Show=0;
+
+/*unsigned long log_T80=0;
 unsigned long log_T70=0;
-unsigned long log_T60=0;
-unsigned long log_T50=0;
-unsigned long log_T40=0;
+unsigned long log_T60=0;*/
+unsigned long log_T50=0;  //Half value hit time
+/*unsigned long log_T40=0;
 unsigned long log_T30=0;
-unsigned long log_T20=0;
+unsigned long log_T20=0;*/
+
+unsigned long d_hsum=0;  //Sum Tmax
+unsigned long d_tsum=0;  //Sum T50
+byte d_tnum=0;  //Hit number
+byte d_rmax=0;
+int d_vmax=0; //Total max hit value
+int d_vmin=1024;  //Total min hit value
+
 #endif
 
 //=================================

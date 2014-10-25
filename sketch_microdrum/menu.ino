@@ -1,3 +1,10 @@
+#if MENU_LOG
+#define S_HITSOFT PSTR("HIT SOFT")
+#define S_HITHARD PSTR("HIT HARD")
+#define S_WAIT PSTR("WAIT...")
+#define S_END PSTR("END")
+#endif
+
 #if MENU
 #define ADD(x) x[eMenuPage-2]=(x[eMenuPage-2]+1)%128;
 #define SUB(x) x[eMenuPage-2]=x[eMenuPage-2]-1>-1?x[eMenuPage-2]-1:127;
@@ -26,6 +33,12 @@
 #define S_BOXER PSTR("Boxer")
 #define S_FAT_STACKS PSTR("FatStacks")
 #define S_BOMBASTIX PSTR("Bombastix")
+
+#define S_LIN PSTR("LIN")
+#define S_EXP PSTR("EXP")
+#define S_LOG PSTR("LOG")
+#define S_SGM PSTR("SGM")
+#define S_FLT PSTR("FLT")
 
 #define S_NOTE PSTR("Note")
 #define S_THRESOLD PSTR("Thresold")
@@ -317,7 +330,18 @@ void Draw()
         else if(eMenuPin==2) MenuString(ScanTimeSensor[eMenuPage-2],eMenuSelect==2);
         else if(eMenuPin==3) MenuString(MaskTimeSensor[eMenuPage-2],eMenuSelect==2);
         else if(eMenuPin==4) MenuString(RetriggerSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==5) MenuString(CurveSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==5)
+       {
+         switch(CurveSensor[eMenuPage-2])
+         {
+           case 0: MenuString(S_LIN,eMenuSelect==2); break;
+           case 1: MenuString(S_EXP,eMenuSelect==2); break;
+           case 2: MenuString(S_LOG,eMenuSelect==2); break;
+           case 3: MenuString(S_SGM,eMenuSelect==2); break;
+           case 4: MenuString(S_FLT,eMenuSelect==2); break;
+           default: MenuString(CurveSensor[eMenuPage-2],eMenuSelect==2);
+         }
+       }
         else if(eMenuPin==6) MenuString(CurveFormSensor[eMenuPage-2],eMenuSelect==2);
         else if(eMenuPin==7) MenuString(XtalkSensor[eMenuPage-2],eMenuSelect==2);
         else if(eMenuPin==8) MenuString(XtalkGroupSensor[eMenuPage-2],eMenuSelect==2);
@@ -422,23 +446,34 @@ void Draw()
 void DrawLog(byte x)
 {
    lcd.setCursor(0,1);
-   
-  if(log_state==2) MenuString(log_Nmax,'N',' ');
+   if(x==0) MenuString(S_WAIT,false);
+   else if(x==1) MenuString(S_HITSOFT,false);
+   else if(x==2) MenuString(S_HITHARD,false);
+   else if(x==3) MenuString(S_END,false);
+   MenuString(d_tnum,'(',')');
+  /*if(log_state==2) MenuString(log_Nmax,'n',' ');
   else
   { 
     if(x==0)
     {
-      MenuString(log_Nmax,'n',' ');
-      MenuString(log_Vmax,'V',' ');
-      MenuString(log_note,'N',' ');
-    }
+      MenuString(log_Nmax,'T',' '); //-> Thresold
+      MenuString((byte)(d_tsum/d_tnum),'S',' '); //-> ScanTime
+      MenuString((byte)(d_hsum/d_tnum),'M',' ');//-> MaskTime
+
+    }  
     else if(x==1)
     {
-      MenuString(log_T2-log_T1,'T',' ');
-      MenuString(log_Tmax-log_T1,'t',' ');     
-      MenuString(log_T80==0?0:log_T80-log_Tmax,'a',' ');
+      MenuString(d_rmax,'R',' '); //-> Retrigger
+      MenuString((40/d_vmin)*64,'G',' '); //-> Gain
+      MenuString((1024/d_vmax)*64,'F',' '); //-> FormFactor
     }
     else if(x==2)
+    {
+      MenuString(d_vmin,'v',' ');
+      MenuString(log_Tmax-log_T1,'t',' ');  
+      MenuString(log_T50==0?0:log_T50-log_Tmax,'h',' ');
+    }*/
+    /*else if(x==2)
     {
       MenuString(log_T70==0?0:log_T70-log_Tmax,'b',' ');
       MenuString(log_T60==0?0:log_T60-log_Tmax,'c',' ');
@@ -450,7 +485,7 @@ void DrawLog(byte x)
       MenuString(log_T30==0?0:log_T30-log_Tmax,'f',' ');
       MenuString(log_T20==0?0:log_T20-log_Tmax,'g',' ');
     }
-  }
+  }*/
 }
 
 #endif
@@ -471,6 +506,8 @@ void MenuString(int inter,bool sel) //sz si puo togliere
 
 void MenuString(int inter,char A,char B) //sz si puo togliere
 {
+  if(inter>999) B='e';
+  
   char cInter[]=" 000 ";
   cInter[0]=A; cInter[4]=B;
   cInter[3]+=inter%10;

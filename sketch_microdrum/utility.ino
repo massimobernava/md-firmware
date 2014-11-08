@@ -96,18 +96,23 @@ void LogTool(int yn_0,byte MulSensor)
       log_Nmax=yn_0;
       log_state=1;
       
+      //ChokeNoteSensor[MulSensor]=64; //GAIN=64 attenzione pialla tutto
+      //CurveFormSensor[MulSensor]=64;
+      //CurveSensor[MulSensor]=0;
+       
       d_hsum=0;
       d_tsum=0;
       d_tnum=0;
-      d_rmax=0;
+      d_rmin=127;
       d_vmax=0;
       d_vmin=1024;
+      d_vmean=0;
       
       N=0;
       
       //WAIT
       DrawLog(0);
-      //GAIN=64 attenzione
+
     }
     else if(log_state==1)//FASE 1: ANALISI
     {
@@ -188,15 +193,18 @@ void LogTool(int yn_0,byte MulSensor)
         //if((log_Tmax-log_T1) > d_tmax) d_tmax=(log_Tmax-log_T1);
         d_hsum+=(log_T50==0?0:log_T50-log_Tmax);
         d_tsum+=(log_Tmax-log_T1);
+        d_hsum2+=(log_T50==0?0:log_T50-log_Tmax)*(log_T50==0?0:log_T50-log_Tmax);
+        d_tsum2+=(log_Tmax-log_T1)*(log_Tmax-log_T1);
         d_tnum++;
         
-        if(((log_Vmax-log_Nmax)/N)>d_rmax) d_rmax=((log_Vmax-log_Nmax)/N);
+        if(((log_Vmax-log_Nmax)/N)<d_rmin) d_rmin=((log_Vmax-log_Nmax)/N);
         if(log_Vmax>d_vmax) d_vmax=log_Vmax;
         if(log_Vmax<d_vmin) d_vmin=log_Vmax;
+        d_vmean+=log_Vmax;
         
         if(d_tnum<25) DrawLog(1);
         else if(d_tnum<50) DrawLog(2);
-        else DrawLog(3);
+        
       }
     }
     else if(log_state==4) //FASE 3: report
@@ -211,13 +219,20 @@ void LogTool(int yn_0,byte MulSensor)
       
       if(d_tnum==25)
       {
-        ChokeNoteSensor[MulSensor]=(40.0/(float)d_vmin)*64.0; //GAIN
+        ChokeNoteSensor[MulSensor]=(40.0/(float)(d_vmean/25))*64.0; //GAIN
+        if (ChokeNoteSensor[MulSensor] <16) ChokeNoteSensor[MulSensor]=16;
         
         log_T1=TIMEFUNCTION;
         log_Nmax=0;
         log_state=1;
       
-        d_rmax=0;
+        d_hsum=0;
+        d_tsum=0;
+      
+        d_hsum2=0;
+        d_tsum2=0;
+        
+        d_rmin=127;
         d_vmax=0;
       
         N=0;
@@ -228,11 +243,14 @@ void LogTool(int yn_0,byte MulSensor)
       else if(d_tnum==50)
      {
        ThresoldSensor[MulSensor]=log_Nmax;
-       ScanTimeSensor[MulSensor]=(d_tsum/d_tnum);
-       MaskTimeSensor[MulSensor]=(d_hsum/d_tnum);
-       RetriggerSensor[MulSensor]=d_rmax;
-       CurveFormSensor[MulSensor]=(1024/d_vmax)*64;
-       CurveSensor[MulSensor]=0; 
+       ScanTimeSensor[MulSensor]=(d_tsum/25)+(sqrt((25*d_tsum2)-(d_tsum*d_tsum))/25);
+       MaskTimeSensor[MulSensor]=(d_hsum/25)+(sqrt((25*d_hsum2)-(d_hsum*d_hsum))/25);
+       RetriggerSensor[MulSensor]=d_rmin;
+       CurveFormSensor[MulSensor]=(1024/d_vmax)*32;
+       CurveSensor[MulSensor]=0;
+       
+       DrawLog(3);
+       log_state=5; //END
      }
      else if(yn_0>log_Nmax) //FASE 2: INIZIO
       {
@@ -240,6 +258,7 @@ void LogTool(int yn_0,byte MulSensor)
         log_state=3;
         log_Vmax=yn_0;
         //log_note=0;
+
          N=0;
          
          DrawLog(0);

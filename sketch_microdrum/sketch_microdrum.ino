@@ -13,7 +13,7 @@
 #define MENU 1
 #define PROF 0
 #define VERYFASTADC 1
-#define SERIALSPEED 1
+#define SERIALSPEED 0
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
 #define LICENSE 0
@@ -160,10 +160,13 @@ unsigned long log_T20=0;*/
 
 unsigned long d_hsum=0;  //Sum Tmax
 unsigned long d_tsum=0;  //Sum T50
+unsigned long d_hsum2=0;  //Sum Tmax^2
+unsigned long d_tsum2=0;  //Sum T50^2
 byte d_tnum=0;  //Hit number
-byte d_rmax=0;
+byte d_rmin=0;
 int d_vmax=0; //Total max hit value
 int d_vmin=1024;  //Total min hit value
+int d_vmean=0;  //Total min hit value
 
 #endif
 

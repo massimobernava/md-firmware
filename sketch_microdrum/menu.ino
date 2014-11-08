@@ -451,6 +451,7 @@ void DrawLog(byte x)
    else if(x==2) MenuString(S_HITHARD,false);
    else if(x==3) MenuString(S_END,false);
    MenuString(d_tnum,'(',')');
+   //MenuString(log_Vmax,'(',')');
   /*if(log_state==2) MenuString(log_Nmax,'n',' ');
   else
   { 

@@ -504,7 +504,7 @@ byte UseCurve(byte Curve,int Value,byte Form)
 {
   int ret=0;
   //float Xn=(float)Value;
-  float f=((float)Form)/64.0;//[1;127]->[0.;2.0]
+  float f=((float)Form)/32.0;//[1;127]->[0.;4.0]
     
   if(Curve==0)
   {

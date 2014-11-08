@@ -102,7 +102,7 @@ void SendHHSetting(byte Set)
    else if(Set<4)Value=HHNoteSensor[Set];
    else if(Set<8)Value=HHThresoldSensor[Set-4];
    else if(Set<10) Value=HHFootNoteSensor[Set-8];
-   else Value==HHFootThresoldSensor[Set-10];
+   else Value=HHFootThresoldSensor[Set-10];
   
    simpleSysex(0x02,0x4C,Set,Value);
 }

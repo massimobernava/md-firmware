@@ -92,12 +92,12 @@ void loop()
       if(StateSensor[Hhc]==FOOTSPLASH_TIME)
       {
         if (Mode==MIDIMode) fastNoteOn(ChannelSensor[i],HHFootNoteSensor[0],127);//127
-        StateSensor[Hhc]=0;
+        StateSensor[Hhc]=NORMAL_TIME;
       }
       else if(StateSensor[Hhc]==FOOTCLOSE_TIME)
       {
         if (Mode==MIDIMode) fastNoteOn(ChannelSensor[i],HHFootNoteSensor[1],127);
-        StateSensor[Hhc]=0;
+        StateSensor[Hhc]=NORMAL_TIME;
       }
       continue;
     }
@@ -112,12 +112,12 @@ void loop()
     {
       if(MaxMultiplexerXtalk[i%8]!=-1 && MaxMultiplexerXtalk[i%8]>(2*MaxReadingSensor[i]))  //Multiplexer XTalk
       {
-        MaxReadingSensor[i]=-1;
+        StateSensor[i]=NORMAL_TIME;
         continue;
       }
       if(MaxXtalkGroup[XtalkGroupSensor[i]]!=-1 && MaxXtalkGroup[XtalkGroupSensor[i]]>(MaxReadingSensor[i]+(64-XtalkSensor[i])*4))
       {
-        MaxReadingSensor[i]=-1;
+        StateSensor[i]=NORMAL_TIME;
         continue;
       }  
       PlaySensorMIDIMode(i);
@@ -162,7 +162,7 @@ void PlaySensorMIDIMode(byte i)
       #endif
            
       StateSensor[i]=MASK_TIME;
-      MaxReadingSensor[i] = -1;
+      MaxReadingSensor[i] = RetriggerSensor[i];
     }
     else if(StateSensor[i]==CHOKE_TIME) //Choke
     {
@@ -173,7 +173,7 @@ void PlaySensorMIDIMode(byte i)
       #endif
       
       StateSensor[i]=MASK_TIME;
-      MaxReadingSensor[i] = -1;
+      MaxReadingSensor[i] = RetriggerSensor[i];
     }
     return;
   }
@@ -191,7 +191,6 @@ void PlaySensorMIDIMode(byte i)
       fastNoteOn(ChannelSensor[i],NoteSensor[i],min(127,MaxReadingSensor[i]*8));
     }
     else
-      //noteOn(ChannelSensor[i],DualNoteSensor[i],min(127,(MaxReadingSensor[i]-512)*8));//DUAL
       fastNoteOn(ChannelSensor[i],DualSensor(i),min(127,(MaxReadingSensor[i]-512)*8));
           
     if(DualSensor(i)!=127)//Dual
@@ -231,7 +230,6 @@ void PlaySensorMIDIMode(byte i)
               #endif
             
               StateSensor[DualSensor(i)]=MASK_TIME;
-              MaxReadingSensor[DualSensor(i)] = -1;
          }
          /*
          else if(TypeSensor[DualSensor(i)]==PIEZO && MaxReadingSensor[DualSensor(i)]> ThresoldSensor[DualSensor(i)]) //Piezo-Piezo
@@ -265,8 +263,6 @@ void PlaySensorMIDIMode(byte i)
 
         fastNoteOn(ChannelSensor[i],Note,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
       }//HH=======================
-               
-    MaxReadingSensor[i] = -1;
   }
 }
 
@@ -316,7 +312,6 @@ void CheckMulti(byte Sensor,byte count)
         if(MaxReadingSensor[MulSensor]>ScanTimeSensor[MulSensor])
         {
           StateSensor[MulSensor]=SWITCH_TIME;
-          MaxRetriggerSensor[MulSensor] = RetriggerSensor[MulSensor];
         }
         else
         {
@@ -327,16 +322,15 @@ void CheckMulti(byte Sensor,byte count)
       if(MaxReadingSensor[MulSensor]>MaskTimeSensor[MulSensor])
       {
           StateSensor[MulSensor]=CHOKE_TIME;
-          MaxRetriggerSensor[MulSensor] = RetriggerSensor[MulSensor];
       }
     }
     
     if(StateSensor[MulSensor]==MASK_TIME)  
     { 
       //if(ZeroCountSensor[MulSensor]>0) DrawDiagnostic(MulSensor,ZeroCountSensor[MulSensor]*16);
-      if(MaxRetriggerSensor[MulSensor] > 0)
+      if(MaxReadingSensor[MulSensor] > 0)
       {
-        MaxRetriggerSensor[MulSensor]=MaxRetriggerSensor[MulSensor]-1;
+        MaxReadingSensor[MulSensor]=MaxReadingSensor[MulSensor]-1;
         //DrawDiagnostic(MulSensor,128);
       }
       else
@@ -386,6 +380,7 @@ void CheckMulti(byte Sensor,byte count)
       if ((Time-TimeSensor[MulSensor])>MaskTimeSensor[MulSensor])
       {
         StateSensor[MulSensor]=RETRIGGER_TIME;
+        TimeSensor[MulSensor]=Time;
       }
     }
     
@@ -394,15 +389,15 @@ void CheckMulti(byte Sensor,byte count)
         
     if(StateSensor[MulSensor]==RETRIGGER_TIME)
     {
-      if(MaxRetriggerSensor[MulSensor]>=0)//(Time-TimeSensor[MulSensor])<3*MaskTimeSensor[MulSensor])
+      int MaxRetriggerSensor=MaxReadingSensor[MulSensor]-((Time-TimeSensor[MulSensor])*(RetriggerSensor[MulSensor]+1)/16);
+      if(MaxRetriggerSensor>0)
       {
-          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor[MulSensor])
+          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor)
           {
             StateSensor[MulSensor]=SCAN_TIME;
             TimeSensor[MulSensor]=Time;
             MaxReadingSensor[MulSensor] = 0;
           }
-          else MaxRetriggerSensor[MulSensor]=(MaxRetriggerSensor[MulSensor]-RetriggerSensor[MulSensor]-1)>0?(MaxRetriggerSensor[MulSensor]-RetriggerSensor[MulSensor]-1):0;
       }
       else
       {
@@ -427,7 +422,6 @@ void CheckMulti(byte Sensor,byte count)
         if(yn_0 > MaxReadingSensor[MulSensor])
         {
           MaxReadingSensor[MulSensor] = yn_0;
-	  MaxRetriggerSensor[MulSensor] = yn_0;//(yn_0 > RetriggerSensor[MulSensor])?(yn_0 - RetriggerSensor[MulSensor]):0;
         
           if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==-1 || MaxXtalkGroup[XtalkGroupSensor[MulSensor]]<yn_0) //MaxGroup
             MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=yn_0;

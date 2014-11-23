@@ -1,12 +1,12 @@
 
 //=====================================================================================
-//=>            microDRUM firmware v1.2.2
+//=>            microDRUM firmware v1.2.3
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2014-10-25
+//=> 2014-11-23
 //=====================================================================================
 
 //========CONFIGURE=============
@@ -229,7 +229,6 @@ byte ChannelSensor[]=     {9,9,9,9,9,9,9,9                ,9,9,9,9,9,9,9,9      
 byte StateSensor[NPin];
 unsigned long TimeSensor[NPin];
 int MaxReadingSensor[NPin];
-int MaxRetriggerSensor[NPin];
 
 int yn_1[NPin];
 
@@ -305,7 +304,7 @@ void setup()
   {
     TimeSensor[count]=Time+MaskTimeSensor[count];
     MaxReadingSensor[count]=-1;
-    MaxRetriggerSensor[count]=0;//0xFF;
+    /MaxRetriggerSensor[count]=0;//0xFF;
   }
 
   #if MENU
@@ -360,8 +359,6 @@ void setup()
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
-  //lcd.print("microDRUM v1.1");
-  //lcd.createChar(0, level1);
   MenuString(PSTR("microDRUM v1.2"),false);
   #endif
   

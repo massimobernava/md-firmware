@@ -12,7 +12,7 @@
 //========CONFIGURE=============
 #define MENU 1
 #define PROF 0
-#define VERYFASTADC 1
+#define FASTADC 1
 #define SERIALSPEED 0
 //Dopo andrà in Thresold
 #define HHCTHRESOLD 10
@@ -304,7 +304,7 @@ void setup()
   {
     TimeSensor[count]=Time+MaskTimeSensor[count];
     MaxReadingSensor[count]=-1;
-    /MaxRetriggerSensor[count]=0;//0xFF;
+    //MaxRetriggerSensor[count]=0;//0xFF;
   }
 
   #if MENU

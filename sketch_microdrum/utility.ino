@@ -267,7 +267,7 @@ void LogTool(int yn_0,byte MulSensor)
   #else
     N++;
     if(yn_0>=(LogThresold*2))
-    SendLog(MulSensor,N,yn_0,MaxRetriggerSensor[MulSensor],MaxReadingSensor[MulSensor],StateSensor[MulSensor]);
+    SendLog(MulSensor,N,yn_0,UseCurve(CurveSensor[MulSensor],MaxReadingSensor[MulSensor],CurveFormSensor[MulSensor]),MaxReadingSensor[MulSensor],StateSensor[MulSensor]);
   #endif  
 }
 

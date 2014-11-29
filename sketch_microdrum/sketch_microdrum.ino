@@ -6,7 +6,7 @@
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2014-11-23
+//=> 2014-11-29
 //=====================================================================================
 
 //========CONFIGURE=============
@@ -186,7 +186,7 @@ unsigned long NProf=0;
 //=================================
 
 //===General================
-const int delayTime=50;
+const int delayTime=10;
 byte GeneralXtalk=0;
 
 const byte NPin=48;

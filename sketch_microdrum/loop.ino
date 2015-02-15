@@ -266,6 +266,21 @@ void PlaySensorMIDIMode(byte i)
   }
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//    CalcRetriggerVal
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+uint16_t CalcRetriggerVal(uint16_t CVal, uint16_t Mult, uint32_t CTime, uint32_t *LastTime)
+{
+    uint16_t Ret = CVal;
+    
+    while((CTime - *LastTime) >= 5)
+    {
+        *LastTime += 5;
+        
+        Ret = (CVal * Mult) / 64;
+    }
+    return Ret;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    CHECKMULTI
@@ -389,15 +404,17 @@ void CheckMulti(byte Sensor,byte count)
         
     if(StateSensor[MulSensor]==RETRIGGER_TIME)
     {
-      int MaxRetriggerSensor=MaxReadingSensor[MulSensor]-((Time-TimeSensor[MulSensor])*(RetriggerSensor[MulSensor]+1)/16);
-      if(MaxRetriggerSensor>0)
+      // 1/n decrease of the previous notes max value. If the current value is above this we have a new note 
+      MaxReadingSensor[MulSensor] = CalcRetriggerVal(MaxReadingSensor[MulSensor], RetriggerSensor[MulSensor], Time, &TimeSensor[MulSensor]);
+      
+      if(MaxReadingSensor[MulSensor] > ThresoldSensor[MulSensor])
       {
-          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor)
-          {
+        if(yn_0 > MaxReadingSensor[MulSensor])
+        {
             StateSensor[MulSensor]=SCAN_TIME;
             TimeSensor[MulSensor]=Time;
             MaxReadingSensor[MulSensor] = 0;
-          }
+        }
       }
       else
       {

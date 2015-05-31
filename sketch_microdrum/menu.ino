@@ -67,8 +67,8 @@
 //==============================
 void Menu()
 {
-  byte btnB = digitalRead(6);
-  byte btnA = digitalRead(7);
+  byte btnB = digitalRead(11);
+  byte btnA = digitalRead(12);
   unsigned long now = millis();
   
   if(btnB==HIGH && btnA==HIGH) softReset();
@@ -193,9 +193,7 @@ void Up()
             case 8: ADD(XtalkGroupSensor); SAVE(XTALKGROUP); break;//XTalkGroup
             case 9: TypeSensor[eMenuPage-2]=(TypeSensor[eMenuPage-2]+1)%128; SAVE(TYPE); break;//Type
             case 10: ADD(ChokeNoteSensor); SAVE(CHOKENOTE); break;//ChokeNote
-            #if ENABLE_CHANNEL
             case 11:  ADD(ChannelSensor); SAVE(CHANNEL); break;//Channel
-            #endif
           }
         }
         else if(eMenuPage==50) //LOG
@@ -360,9 +358,7 @@ void Draw()
        }
         else if(eMenuPin==10) MenuString(ChokeNoteSensor[eMenuPage-2],eMenuSelect==2);
         else if(eMenuPin==11) MenuString(DualSensor(eMenuPage-2),eMenuSelect==2);
-        #if ENABLE_CHANNEL
         else if(eMenuPin==12) MenuString(ChannelSensor[eMenuPage-2],eMenuSelect==2);
-        #endif
       }
       /*else if(eMenuPage==50)
       {
@@ -425,9 +421,7 @@ void Draw()
             case 8: SUB(XtalkGroupSensor); SAVE(XTALKGROUP); break;//XTalkGroup
             case 9: SUB(TypeSensor); SAVE(TYPE); break;//Type
             case 10: SUB(ChokeNoteSensor); SAVE(CHOKENOTE); break;//ChokeNote
-            #if ENABLE_CHANNEL
             case 11: SUB(ChannelSensor); SAVE(CHANNEL); break;//Channel
-            #endif
           }
         }
         else if(eMenuPage==50)

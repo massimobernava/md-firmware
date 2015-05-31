@@ -1,8 +1,6 @@
-
 //==============================
 //    EEPROM
 //==============================
-
 #if defined(__arm__) 
 /* These two functions help us write to the 24LC256 EEPROM chip */
 #define EEPROM_ADDR 0x50

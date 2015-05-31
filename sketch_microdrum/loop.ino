@@ -1,16 +1,14 @@
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //     LOOP
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void loop()
 {
   //simpleSysex(0xFF,Mode,0x00,0x00);
-  Input();
+  USB_Input();
   #if MENU
   Menu();
   #endif
-  
-
+   
   if(Mode==OffMode)
   {
     #if LICENSE
@@ -22,8 +20,7 @@ void loop()
     //NSensor=2;
     return;
   }
-
-
+  
   //==========UNROLLING======
   //{0, 1, 3, 2, 6, 7, 5, 4}
   //=========================
@@ -91,13 +88,28 @@ void loop()
       //Foot Splash
       if(StateSensor[Hhc]==FOOTSPLASH_TIME)
       {
-        if (Mode==MIDIMode) fastNoteOn(ChannelSensor[i],HHFootNoteSensor[0],127);//127
-        StateSensor[Hhc]=NORMAL_TIME;
+        if (Mode==MIDIMode) 
+        {
+        #if USB_MIDI                      //////////////////////////////////////////////////////////////////////
+        usbMIDI.sendNoteOn(HHFootNoteSensor[0],127,ChannelSensor[i]); 
+        #else 
+        MIDI.sendNoteOn(HHFootNoteSensor[0],127,ChannelSensor[i]);
+        #endif///////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        StateSensor[Hhc]=0;}
       }
       else if(StateSensor[Hhc]==FOOTCLOSE_TIME)
       {
-        if (Mode==MIDIMode) fastNoteOn(ChannelSensor[i],HHFootNoteSensor[1],127);
-        StateSensor[Hhc]=NORMAL_TIME;
+        if (Mode==MIDIMode) 
+        {
+        #if USB_MIDI ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+        usbMIDI.sendNoteOn(HHFootNoteSensor[1],127,ChannelSensor[i]); 
+        #else 
+        MIDI.sendNoteOn(HHFootNoteSensor[1],127,ChannelSensor[i]);
+        
+        #endif///////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        StateSensor[Hhc]=0;}
       }
       continue;
     }
@@ -107,22 +119,18 @@ void loop()
     if(SS==NORMAL_TIME || SS==SCAN_TIME || SS==MASK_TIME || SS==RETRIGGER_TIME) continue;
 
     //=============XTALK==================
-    if(Mode==ToolMode && Diagnostic==true) PlaySensorTOOLMode(i);
-    else
-    {
       if(MaxMultiplexerXtalk[i%8]!=-1 && MaxMultiplexerXtalk[i%8]>(2*MaxReadingSensor[i]))  //Multiplexer XTalk
       {
-        StateSensor[i]=NORMAL_TIME;
+        MaxReadingSensor[i]=-1;
         continue;
       }
       if(MaxXtalkGroup[XtalkGroupSensor[i]]!=-1 && MaxXtalkGroup[XtalkGroupSensor[i]]>(MaxReadingSensor[i]+(64-XtalkSensor[i])*4))
       {
-        StateSensor[i]=NORMAL_TIME;
+        MaxReadingSensor[i]=-1;
         continue;
       }  
       PlaySensorMIDIMode(i);
 
-    }
   }
   //RESET XTALK
   for(int i=0;i<8;i++)
@@ -141,7 +149,7 @@ void PlaySensorMIDIMode(byte i)
   { 
     /*if(TypeSensor[DualSensor(i)]==SWITCH) //Switch-Switch
     { 
-      fastNoteOn(ChannelSensor[i],NoteSensor[i],MaxReadingSensor[i]/8);
+      MIDI.sendNoteOn(ChannelSensor[i],NoteSensor[i],MaxReadingSensor[i]/8);
     
       #if WAVTRIGGER
       wavTrigger(i,MaxReadingSensor[i]/8);
@@ -154,26 +162,34 @@ void PlaySensorMIDIMode(byte i)
       
     }*/
     if(StateSensor[i]==SWITCH_TIME)
-    {
-      fastNoteOn(ChannelSensor[i],NoteSensor[i],127);//MaxReadingSensor[i]*18);
+    { 
+      #if USB_MIDI
+      usbMIDI.sendNoteOn(NoteSensor[i],127,ChannelSensor[i]);//MaxReadingSensor[i]*18);
+      #else
+      MIDI.sendNoteOn(NoteSensor[i],127,ChannelSensor[i]);//MaxReadingSensor[i]*18);
+      #endif
     
       #if WAVTRIGGER
       wavTrigger(i,126);//MaxReadingSensor[i]*18);
       #endif
            
       StateSensor[i]=MASK_TIME;
-      MaxReadingSensor[i] = RetriggerSensor[i];
+      MaxReadingSensor[i] = -1;
     }
     else if(StateSensor[i]==CHOKE_TIME) //Choke
-    {
-      fastNoteOn(ChannelSensor[i],ChokeNoteSensor[i],127);
+    { 
+      #if USB_MIDI
+      usbMIDI.sendNoteOn(ChokeNoteSensor[i],127,ChannelSensor[i]);
+      #else
+      MIDI.sendNoteOn(ChokeNoteSensor[i],127,ChannelSensor[i]);
+      #endif
       
       #if WAVTRIGGER
       wavChoke(i);
       #endif
       
       StateSensor[i]=MASK_TIME;
-      MaxReadingSensor[i] = RetriggerSensor[i];
+      MaxReadingSensor[i] = -1;
     }
     return;
   }
@@ -188,11 +204,20 @@ void PlaySensorMIDIMode(byte i)
   {
     if(MaxReadingSensor[i] <= 512)
     {
-      fastNoteOn(ChannelSensor[i],NoteSensor[i],min(127,MaxReadingSensor[i]*8));
+      #if USB_MIDI
+      usbMIDI.sendNoteOn(NoteSensor[i],min(127,MaxReadingSensor[i]*8),ChannelSensor[i]);
+      #else
+      MIDI.sendNoteOn(NoteSensor[i],min(127,MaxReadingSensor[i]*8),ChannelSensor[i]);
+      #endif
     }
     else
-      fastNoteOn(ChannelSensor[i],DualSensor(i),min(127,(MaxReadingSensor[i]-512)*8));
-          
+    #if USB_MIDI
+      //noteOn(ChannelSensor[i],DualNoteSensor[i],min(127,(MaxReadingSensor[i]-512)*8));//DUAL
+      usbMIDI.sendNoteOn(DualSensor(i),min(127,(MaxReadingSensor[i]-512)*8),ChannelSensor[i]);
+      #else
+      MIDI.sendNoteOn(DualSensor(i),min(127,(MaxReadingSensor[i]-512)*8),ChannelSensor[i]);
+      #endif
+      
     if(DualSensor(i)!=127)//Dual
     {
       MaxReadingSensor[DualSensor(i)]=-1;
@@ -203,7 +228,7 @@ void PlaySensorMIDIMode(byte i)
     return;
   }
   //===============================
-  
+  //		Piezo
   //====================================================================
   if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ StateSensor[i]==PIEZO_TIME)
   {          
@@ -215,21 +240,33 @@ void PlaySensorMIDIMode(byte i)
         #if WAVTRIGGER
         wavTrigger(i,v);
         #endif
-          
-        fastNoteOn(ChannelSensor[i],NoteSensor[i],v);
+        
+        #if USB_MIDI  
+        usbMIDI.sendNoteOn(NoteSensor[i],v,ChannelSensor[i]);
+        //qBlink(); delay(100);
+        usbMIDI.sendNoteOff(NoteSensor[i],v,ChannelSensor[i]);
+        #else        
+        MIDI.sendNoteOn(NoteSensor[i],v,ChannelSensor[i]);
+        MIDI.sendNoteOff(NoteSensor[i],v,ChannelSensor[i]);
+        #endif
         
         StateSensor[i]=MASK_TIME;
               
         //Piezo-Switch
         if(TypeSensor[DualSensor(i)]==SWITCH && StateSensor[DualSensor(i)]==SWITCH_TIME )
-        {
-              fastNoteOn(ChannelSensor[DualSensor(i)],NoteSensor[DualSensor(i)],127);
-    
+        {     
+              #if USB_MIDI
+              usbMIDI.sendNoteOn(NoteSensor[DualSensor(i)],127,ChannelSensor[DualSensor(i)]);
+              #else              
+              MIDI.sendNoteOn(NoteSensor[DualSensor(i)],127,ChannelSensor[DualSensor(i)]);
+              #endif
+              
               #if WAVTRIGGER
               wavTrigger(DualSensor(i),126);
               #endif
             
               StateSensor[DualSensor(i)]=MASK_TIME;
+              MaxReadingSensor[DualSensor(i)] = -1;
          }
          /*
          else if(TypeSensor[DualSensor(i)]==PIEZO && MaxReadingSensor[DualSensor(i)]> ThresoldSensor[DualSensor(i)]) //Piezo-Piezo
@@ -238,7 +275,7 @@ void PlaySensorMIDIMode(byte i)
             #if WAVTRIGGER
              wavTrigger(DualSensor(i),v);
             #endif
-            fastNoteOn(ChannelSensor[DualSensor(i)],NoteSensor[DualSensor(i)],v);
+            MIDI.sendNoteOn(ChannelSensor[DualSensor(i)],NoteSensor[DualSensor(i)],v);
             
             MaxReadingSensor[DualSensor(i)]=-1;  //Dual XTalk
           
@@ -261,8 +298,14 @@ void PlaySensorMIDIMode(byte i)
              else if(MaxReadingSensor[Hhc]>HHThresoldSensor[0])
                Note=HHNoteSensor[0];
 
-        fastNoteOn(ChannelSensor[i],Note,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]));
+        #if USB_MIDI
+        usbMIDI.sendNoteOn(Note,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),ChannelSensor[i]);
+        #else
+        MIDI.sendNoteOn(Note,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),ChannelSensor[i]);
+        #endif
       }//HH=======================
+               
+    MaxReadingSensor[i] = -1;
   }
 }
 
@@ -312,6 +355,7 @@ void CheckMulti(byte Sensor,byte count)
         if(MaxReadingSensor[MulSensor]>ScanTimeSensor[MulSensor])
         {
           StateSensor[MulSensor]=SWITCH_TIME;
+          MaxRetriggerSensor[MulSensor] = RetriggerSensor[MulSensor];
         }
         else
         {
@@ -322,15 +366,16 @@ void CheckMulti(byte Sensor,byte count)
       if(MaxReadingSensor[MulSensor]>MaskTimeSensor[MulSensor])
       {
           StateSensor[MulSensor]=CHOKE_TIME;
+          MaxRetriggerSensor[MulSensor] = RetriggerSensor[MulSensor];
       }
     }
     
     if(StateSensor[MulSensor]==MASK_TIME)  
     { 
       //if(ZeroCountSensor[MulSensor]>0) DrawDiagnostic(MulSensor,ZeroCountSensor[MulSensor]*16);
-      if(MaxReadingSensor[MulSensor] > 0)
+      if(MaxRetriggerSensor[MulSensor] > 0)
       {
-        MaxReadingSensor[MulSensor]=MaxReadingSensor[MulSensor]-1;
+        MaxRetriggerSensor[MulSensor]=MaxRetriggerSensor[MulSensor]-1;
         //DrawDiagnostic(MulSensor,128);
       }
       else
@@ -380,7 +425,6 @@ void CheckMulti(byte Sensor,byte count)
       if ((Time-TimeSensor[MulSensor])>MaskTimeSensor[MulSensor])
       {
         StateSensor[MulSensor]=RETRIGGER_TIME;
-        TimeSensor[MulSensor]=Time;
       }
     }
     
@@ -389,15 +433,15 @@ void CheckMulti(byte Sensor,byte count)
         
     if(StateSensor[MulSensor]==RETRIGGER_TIME)
     {
-      int MaxRetriggerSensor=MaxReadingSensor[MulSensor]-((Time-TimeSensor[MulSensor])*(RetriggerSensor[MulSensor]+1)/16);
-      if(MaxRetriggerSensor>0)
+      if(MaxRetriggerSensor[MulSensor]>=0)//(Time-TimeSensor[MulSensor])<3*MaskTimeSensor[MulSensor])
       {
-          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor)
+          if((yn_0 - yn_1[MulSensor])> ThresoldSensor[MulSensor] && yn_0 > MaxRetriggerSensor[MulSensor])
           {
             StateSensor[MulSensor]=SCAN_TIME;
             TimeSensor[MulSensor]=Time;
             MaxReadingSensor[MulSensor] = 0;
           }
+          else MaxRetriggerSensor[MulSensor]=(MaxRetriggerSensor[MulSensor]-RetriggerSensor[MulSensor]-1)>0?(MaxRetriggerSensor[MulSensor]-RetriggerSensor[MulSensor]-1):0;
       }
       else
       {
@@ -422,6 +466,7 @@ void CheckMulti(byte Sensor,byte count)
         if(yn_0 > MaxReadingSensor[MulSensor])
         {
           MaxReadingSensor[MulSensor] = yn_0;
+	  MaxRetriggerSensor[MulSensor] = yn_0;//(yn_0 > RetriggerSensor[MulSensor])?(yn_0 - RetriggerSensor[MulSensor]):0;
         
           if(MaxXtalkGroup[XtalkGroupSensor[MulSensor]]==-1 || MaxXtalkGroup[XtalkGroupSensor[MulSensor]]<yn_0) //MaxGroup
             MaxXtalkGroup[XtalkGroupSensor[MulSensor]]=yn_0;
@@ -463,9 +508,15 @@ void CheckHHControl(byte HHControl,byte sensorReading)
         wavTriggerHHC(sensorReading);
         #endif
         
-        fastMidiCC(ChannelSensor[HHControl],NoteSensor[HHControl],sensorReading);
+        #if USB_MIDI
+        usbMIDI.sendControlChange(NoteSensor[HHControl], sensorReading, ChannelSensor[HHControl]);
+        #else
+        MIDI.sendControlChange(NoteSensor[HHControl], sensorReading, ChannelSensor[HHControl]);
+        #endif
+        
       }
-      else if(Mode==ToolMode && Diagnostic==true)
+        
+        else if(Mode==ToolMode && Diagnostic==true)
         simpleSysex(0x6F,HHControl,sensorReading,0);
         
       float m=(((float)MaxReadingSensor[HHControl]-(float)sensorReading)/((float)TimeSensor[HHControl]-(float)Time))*100;
@@ -502,7 +553,7 @@ byte UseCurve(byte Curve,int Value,byte Form)
     
   if(Curve==0)
   {
-    ret=0.5 + ((float)Value*f/8.0);
+    ret=0.5 + ((float)Value*f/8.0);   //ret=((float)Value*f/32.0) - 0.5; maybe?
   }
   else
   {

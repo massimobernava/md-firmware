@@ -1,8 +1,61 @@
-
 //==============================
 //    SENDLOG
 //==============================
 void SendLog(byte Sensor,int N,int Y0,int MaxRetrigger,int MaxReading,byte State)
+{
+  //Time               4 bytes
+  //Sensor             1 byte
+  //N                  2 bytes
+  //Reading            2 bytes
+  //Y0                 2 bytes
+  //MaxReading         2 bytes
+  //State (Scan,Mask)  1 byte
+  
+  byte buf[19]; // Work only with Arduino serial (MIDI>127)
+  
+  buf[0] = 0xF0;
+  buf[1] = 0x77;
+  buf[2] = 0x6E;
+  buf[3] =19;
+  
+  buf[4] = (byte) Time;
+  buf[5] = (byte) (Time >> 8);
+  buf[6] = (byte) (Time >> 16);
+  buf[7] = (byte) (Time >> 24);
+  
+  buf[8] = Sensor;
+
+  buf[9] = (byte)N;
+  buf[10] = (byte)(N>>8);
+  
+  buf[11] = (byte)MaxRetrigger;
+  buf[12] = (byte)(MaxRetrigger>>8);
+  
+  buf[13] = (byte)Y0;
+  buf[14] = (byte)(Y0>>8);
+  
+  buf[15] = (byte)MaxReading;
+  buf[16] = (byte)(MaxReading>>8);
+  
+  buf[17] = State;
+  
+  buf[18] = 0xF7;
+  
+  #if USB_MIDI
+   usbMIDI.sendSysEx(19, buf);  
+   #else
+   Serial1.write(19,buf);
+  #endif
+  
+  #if Serial_Debug
+  Serial.println("Sendlog ");
+   for(int i=0; i<20; i++)
+    {Serial.print(buf[i]); Serial.print(" ");}
+    Serial.println();
+  #endif
+}
+
+/*void SendLog(byte Sensor,int N,int Y0,int MaxRetrigger,int MaxReading,byte State)
 {
   //Time               4 bytes
   //Sensor             1 byte
@@ -38,10 +91,49 @@ void SendLog(byte Sensor,int N,int Y0,int MaxRetrigger,int MaxReading,byte State
   Sysex(0x6E,buf,14);
   
 }
+*/
 
 //==============================
 //    SENDPROFILING
 //==============================
+#if PROF
+void SendProfiling()
+{
+  byte buf[13];
+  
+  
+  buf[0] = 0xF0;
+  buf[1] = 0x77;
+  buf[3] = 0x6D;
+  buf[4] = 14;    //not sure if I need this
+  buf[5] = (byte) TimeProf;
+  buf[6] = (byte) (TimeProf >> 8);
+  buf[7] = (byte) (TimeProf >> 16);
+  buf[8] = (byte) (TimeProf >> 24);
+  
+  buf[9] = (byte) NProf;
+  buf[10] = (byte) (NProf >> 8);
+  buf[11] = (byte) (NProf >> 16);
+  buf[12] = (byte) (NProf >> 24);
+  
+  buf[13] = 0xF7;
+  
+  #if USB_MIDI
+   usbMIDI.sendSysEx(13, buf);
+   #else
+   Serial1.write(13,buf);
+  #endif
+  
+  #if Serial_Debug
+  Serial.println("Profiling");
+   for(int i=0; i<20; i++)
+    {Serial.print(buf[i]); Serial.print(" ");}
+    Serial.println();
+  #endif
+}
+#endif
+
+/*
 #if PROF
 void SendProfiling()
 {
@@ -60,6 +152,7 @@ void SendProfiling()
   Sysex(0x6D,buf,8);
 }
 #endif
+*/
 
 //==============================
 //    LICENSE
@@ -267,7 +360,7 @@ void LogTool(int yn_0,byte MulSensor)
   #else
     N++;
     if(yn_0>=(LogThresold*2))
-    SendLog(MulSensor,N,yn_0,UseCurve(CurveSensor[MulSensor],MaxReadingSensor[MulSensor],CurveFormSensor[MulSensor]),MaxReadingSensor[MulSensor],StateSensor[MulSensor]);
+    SendLog(MulSensor,N,yn_0,MaxRetriggerSensor[MulSensor],MaxReadingSensor[MulSensor],StateSensor[MulSensor]);
   #endif  
 }
 
@@ -331,75 +424,16 @@ void PlaySensorTOOLMode(byte i)
                
     MaxReadingSensor[i] = -1;
   }
-  /*
-  if ((Time-TimeSensor[i]) >= ScanTimeSensor[i] )
-  {         
-    //if (MaxReadingSensor[i] > ThresoldSensor[i])
-    {
-      //Dual
-      if(TypeSensor[i]==PIEZO)
-      {
-        //Piezo-Piezo
-        if(TypeSensor[DualSensor(i)]==PIEZO) //Piezo-Piezo
-        {
-          //DUAL
-          if(MaxReadingSensor[DualSensor(i)]>MaxReadingSensor[i])
-          {
-            MaxReadingSensor[i]=-1;
-            return;
-          }
-          else
-          {
-            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-            MaxReadingSensor[DualSensor(i)]=-1;  //Dual XTalk
-          }
-        }
-        else if(TypeSensor[DualSensor(i)]==SWITCH)//Piezo-Switch
-        {
-          //Se lo switch è stato attivato questo viene inibito altrimenti suona come un piezo normale
-          if(MaxReadingSensor[DualSensor(i)]<0)
-          {
-            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-            //simpleSysex(0x6F,DualSensor(i),ZeroCountSensor[DualSensor(i)],0);
-            MaxReadingSensor[i] = -1;
-            
-            //STOP SWITCH
-            MaxReadingSensor[DualSensor(i)]=-1;
-            StateSensor[DualSensor(i)]=0;
-          } 
-          else
-           {
-             simpleSysex(0x6F,DualSensor(i),UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-             
-             MaxReadingSensor[i] = -1;
-             //Lo mettiamo in mask
-             TimeSensor[i]=Time-ScanTimeSensor[i];
-            
-            //STOP SWITCH
-            MaxReadingSensor[DualSensor(i)]=-1;
-            StateSensor[DualSensor(i)]=NORMAL_TIME;
-           }   
-          return;
-        }
-        else
-          simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-      }
-      else //Mono========================================
-      {
-        simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-      }//Mono=======================
-    }//Thresold
-   
-    MaxReadingSensor[i] = -1;
-  }//ScanTime*/
 }
 
 //==============================
-//    SOFTRESET
+//    SOFTRESET           
 //==============================
 void softReset() {
   #if defined(__AVR__)
   asm volatile (" jmp 0");
+  #elif defined(__MK20DX256__)
+  WRITE_RESTART(0x5FA0004);
   #endif 
 //wdt_enable(WDTO_30MS);
 }

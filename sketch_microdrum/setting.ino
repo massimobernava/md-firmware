@@ -20,9 +20,7 @@ void SendPinSetting(byte Pin,byte Set)
       //simpleSysex(0x02,Pin,0x0B,DualNoteSensor[Pin]);//DUALNOTE
       //simpleSysex(0x02,Pin,0x0C,DualThresoldSensor[Pin]);//DUALTHRESOLD
       simpleSysex(0x02,Pin,0x0D,TypeSensor[Pin]);//TYPE
-      #if ENABLE_CHANNEL
       simpleSysex(0x02,Pin,0x0E,ChannelSensor[Pin]);//CHANNEL
-      #endif
       return;
   } 
  
@@ -70,9 +68,7 @@ byte GetPinSetting(byte Pin,byte Set)
       Value=TypeSensor[Pin];
       break;
     case CHANNEL:
-    #if ENABLE_CHANNEL
       Value=ChannelSensor[Pin];
-    #endif
       break; 
   } 
  
@@ -148,7 +144,6 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       break;
       
       case 0x01: //SetMode
-        Serial.flush();
         switch(Data1)
         {
            case OffMode: Mode=OffMode; break;
@@ -228,10 +223,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
             case CHOKENOTE: ChokeNoteSensor[Data1]=Data3; break;
             //case 0x0A: DualSensor[Data1]=Data3; break; //DUAL
             case TYPE: TypeSensor[Data1]=Data3; break;
-            #if ENABLE_CHANNEL
-            case CHANNEL: ChannelSensor[Data1]=Data3; break;
-            #endif
-                         
+            case CHANNEL: ChannelSensor[Data1]=Data3; break;                         
           }
         }
       break;
@@ -306,7 +298,6 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       break;
       
       case 0x7F: //RESET
-        Serial.flush();
         Mode=OffMode;
         softReset();
         //simpleSysex(0x7F,0x00,0x00,0x00);
@@ -317,7 +308,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
 //==============================
 //    INPUT
 //==============================
-void Input()
+/*void Input()
 {
   //===HANDSHAKE======
   while(Serial.peek()>=0 && Serial.peek()!=0xF0) Serial.read();
@@ -335,4 +326,39 @@ void Input()
     
     ExecCommand(Cmd,Data1,Data2,Data3);
   }
-}
+}*/
+//==============================
+//    USB INPUT
+//==============================
+void USB_Input()
+{ 
+  if(usbMIDI.read() && usbMIDI.getType() == 7)
+  { qBlink(); delay(10); qBlink();
+  
+    int ID    = usbMIDI.getSysExArray()[1];
+    int Cmd   = usbMIDI.getSysExArray()[2];
+    int Data1 = usbMIDI.getSysExArray()[3];
+    int Data2 = usbMIDI.getSysExArray()[4];
+    int Data3 = usbMIDI.getSysExArray()[5];
+    int End   = usbMIDI.getSysExArray()[6];
+    
+    ExecCommand(Cmd,Data1,Data2,Data3);
+
+    
+    #if Serial_Debug
+    Serial.println("USB_Input "); // Recieved communication
+    Serial.print(ID);
+    Serial.print(" ");
+    Serial.print(Cmd);
+    Serial.print(" ");
+    Serial.print(Data1);
+    Serial.print(" ");
+    Serial.print(Data2);
+    Serial.print(" ");
+    Serial.print(Data3);
+    Serial.print(" ");
+    Serial.print(End);
+    Serial.println();
+    #endif
+   }
+  }

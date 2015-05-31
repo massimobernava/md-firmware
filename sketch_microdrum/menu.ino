@@ -33,6 +33,7 @@
 #define S_BOXER PSTR("Boxer")
 #define S_FAT_STACKS PSTR("FatStacks")
 #define S_BOMBASTIX PSTR("Bombastix")
+#define S_SALAMANDER PSTR("Salamander")
 
 #define S_LIN PSTR("LIN")
 #define S_EXP PSTR("EXP")
@@ -171,7 +172,7 @@ void Up()
           /*if(eMenuGeneral==0) delayTime=(delayTime+1)%999;//Delay
           else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk+1)%8;//XTalk
           #if WAVTRIGGER
-          else if(eMenuGeneral==2) kit=(kit+1)%3;
+          else if(eMenuGeneral==2) kit=(kit+1)%4;
           #endif
           else if(eMenuGeneral==3) { HHThresoldSensor[0]=(HHThresoldSensor[0]+1)%128; SaveHHEEPROM(0x04,HHThresoldSensor[0]); }
           else if(eMenuGeneral==4) { HHThresoldSensor[1]=(HHThresoldSensor[1]+1)%128; SaveHHEEPROM(0x05,HHThresoldSensor[1]); }
@@ -316,6 +317,7 @@ void Draw()
           if(kit==0) MenuString(S_FAT_STACKS,eMenuSelect==2);
           else if(kit==1) MenuString(S_BOXER,eMenuSelect==2);
           else if(kit==2) MenuString(S_BOMBASTIX,eMenuSelect==2);
+          else if(kit==3) MenuString(S_SALAMANDER,eMenuSelect==2);
         }
         #endif
         else if(eMenuGeneral==3) MenuString(HHThresoldSensor[0],eMenuSelect==2);
@@ -403,7 +405,7 @@ void Draw()
           /*if(eMenuGeneral==0) delayTime=delayTime-1>-1?delayTime-1:999;//Delay
           else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk-1>-1)?GeneralXtalk-1:7;//General XTalk
           #if WAVTRIGGER
-          else if(eMenuGeneral==2) kit=(kit-1>-1)?kit-1:2;
+          else if(eMenuGeneral==2) kit=(kit-1>-1)?kit-1:3;
           #endif
           else if(eMenuGeneral==3) { HHThresoldSensor[0]=((HHThresoldSensor[0]-1)>-1)?HHThresoldSensor[0]-1:127; SaveHHEEPROM(0x04,HHThresoldSensor[0]); }
           else if(eMenuGeneral==4) { HHThresoldSensor[1]=((HHThresoldSensor[1]-1)>-1)?HHThresoldSensor[1]-1:127; SaveHHEEPROM(0x05,HHThresoldSensor[1]); }

@@ -1,12 +1,12 @@
 
 //=====================================================================================
-//=>            microDRUM firmware v1.2.3
+//=>            microDRUM firmware v1.3.0
 //=>              www.microdrum.net
 //=>               CC BY-NC-SA 3.0
 //=>
 //=> Massimo Bernava
 //=> massimo.bernava@gmail.com
-//=> 2014-11-29
+//=> 2015-03-07
 //=====================================================================================
 
 //========CONFIGURE=============
@@ -22,6 +22,7 @@
 //#define WT_24 1
 #define ENABLE_CHANNEL 0
 #define MENU_LOG 1
+#define NANO 1
 //==============================
 
 #if defined(__arm__) 
@@ -36,7 +37,11 @@
 //#include <math.h>
 
 #if MENU
+#if NANO
+#include "LiquidCrystal595.h"
+#else
 #include <LiquidCrystal.h>
+#endif
 #endif
 
 //===========MODE============
@@ -256,7 +261,11 @@ unsigned long btnB_Time=0;
 //byte btnA_Click=0;
 //bool Changed=true;
 
+#if NANO
+LiquidCrystal595 lcd(8, 9, 10); 
+#else
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
+#endif
 
 /*byte level1[8] = {
     B00000,
@@ -277,8 +286,9 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define FAT_STACKS 0
 #define BOXER 1
 #define BOMBASTIX 2
+#define SALAMANDER 3
 
-byte kit=2;
+byte kit=BOMBASTIX;
 
 SoftwareSerial mySerial(6, 5); // RX, TX
 #endif
@@ -356,10 +366,17 @@ void setup()
   #endif
   
   #if MENU
+  #if NANO
+  lcd.setLED2Pin(HIGH);
+  #endif
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
+  #if NANO
+  MenuString(PSTR("nanoDRUM v1.0"),false);
+  #else
   MenuString(PSTR("microDRUM v1.2"),false);
+  #endif
   #endif
   
   fastWrite(3,0);fastWrite(4,0);

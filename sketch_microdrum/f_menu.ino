@@ -1,3 +1,31 @@
+
+//==============================
+//    MENU
+//==============================
+#if USE_LCD
+#define HOLDDELAY 500
+#define DEBOUNCEDELAY 50
+byte eMenuSelect=0;
+byte eMenuPage=0;
+byte eMenuGeneral=0;
+byte eMenuPin=0;
+//byte eMenuLog=0;
+byte btnB_State=0;
+byte btnA_State=0;
+unsigned long btnA_Time=0;
+unsigned long btnB_Time=0;
+//byte btnA_Click=0;
+//bool Changed=true;
+
+#if USE_595
+LiquidCrystal595 lcd(8, 9, 10); 
+#else
+LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
+#endif
+
+#endif
+//==============================
+
 #if MENU_LOG
 #define S_HITSOFT PSTR("HIT SOFT")
 #define S_HITHARD PSTR("HIT HARD")
@@ -5,16 +33,17 @@
 #define S_END PSTR("END")
 #endif
 
-#if MENU
-#define ADD(x) x[eMenuPage-2]=(x[eMenuPage-2]+1)%128;
-#define SUB(x) x[eMenuPage-2]=x[eMenuPage-2]-1>-1?x[eMenuPage-2]-1:127;
+#if USE_LCD
+#define ADD(x) Pin[eMenuPage-2].x=(Pin[eMenuPage-2].x+1)%128;
+#define TADD(x,t) Pin[eMenuPage-2].x=(t)((Pin[eMenuPage-2].x+1)%128);
+#define SUB(x) Pin[eMenuPage-2].x=Pin[eMenuPage-2].x-1>-1?Pin[eMenuPage-2].x-1:127;
+#define TSUB(x,t) Pin[eMenuPage-2].x=(t)(Pin[eMenuPage-2].x-1>-1?Pin[eMenuPage-2].x-1:127);
 #define SAVE(x) SaveEEPROM(eMenuPage-2,x);
 
 #define S_MODE PSTR("MODE")
 #define S_GENERAL PSTR("General")
 #define S_PIN PSTR("PIN")
 #define S_LOGDIS PSTR("TOOL MODE DISABLED")
-
 
 //#define S_NULL PSTR("---")
 #define S_OFF PSTR("OFF")
@@ -62,6 +91,27 @@
 #define S_HHS PSTR("HHs")
 #define S_YSWITCH PSTR("YSwitch")
 #define S_DISABLED PSTR("Disabled")
+
+//DEFAULT NAME STRING
+#define S_SNAREHEAD PSTR("Snare Head")
+#define S_SNARERIM PSTR("Snare Rim")
+#define S_EFFECT PSTR("Effect")
+#define S_KICK PSTR("Kick")
+#define S_HHC PSTR("HHC")
+#define S_HHBOW PSTR("HH Bow")
+#define S_HHEDGE PSTR("HH Edge")
+#define S_TOM1HEAD PSTR("Tom1 Head")
+#define S_TOM1RIM PSTR("Tom1 Rim")
+#define S_TOM2HEAD PSTR("Tom2 Head")
+#define S_TOM2RIM PSTR("Tom2 Rim")
+#define S_CRASHBOW PSTR("Crash Bow")
+#define S_CRASHEDGE PSTR("Crash Edge")
+#define S_RIDEBOW PSTR("Ride Bow")
+#define S_RIDEEDGE PSTR("Ride Edge")
+#define S_TOM3HEAD PSTR("Tom3 Head")
+#define S_TOM3RIM PSTR("Tom3 Rim")
+#define S_TOM4HEAD PSTR("Tom4 Head")
+#define S_TOM4RIM PSTR("Tom4 Rim")
 
 //==============================
 //    MENU     
@@ -160,7 +210,7 @@ void Up()
   }
   else if(eMenuSelect==1)
   {
-    if(eMenuPage==0) Mode=(Mode+1)%4; //MODE
+    if(eMenuPage==0) Mode=(mode)(((int)Mode+1)%4); //MODE
     else if(eMenuPage==1) eMenuGeneral=(eMenuGeneral+1)%7;//General
     else if(eMenuPage>=2 && eMenuPage<50) eMenuPin=(eMenuPin+1)%12;//Pin
     else if(eMenuPage==50) eMenuPage=(eMenuPage+1)%51;//eMenuLog=(eMenuLog+1)%2;//LOG
@@ -171,7 +221,7 @@ void Up()
     {
           /*if(eMenuGeneral==0) delayTime=(delayTime+1)%999;//Delay
           else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk+1)%8;//XTalk
-          #if WAVTRIGGER
+          #if USE_WAVTRIGGER
           else if(eMenuGeneral==2) kit=(kit+1)%4;
           #endif
           else if(eMenuGeneral==3) { HHThresoldSensor[0]=(HHThresoldSensor[0]+1)%128; SaveHHEEPROM(0x04,HHThresoldSensor[0]); }
@@ -183,19 +233,19 @@ void Up()
         {
           switch(eMenuPin)
           {
-            case 0: ADD(NoteSensor); SAVE(NOTE); break;//Note
-            case 1: ADD(ThresoldSensor); SAVE(THRESOLD); break;//Thresold
-            case 2: ADD(ScanTimeSensor); SAVE(SCANTIME); break;//ScanTime
-            case 3: ADD(MaskTimeSensor); SAVE(MASKTIME); break;//MaskTime
-            case 4: ADD(RetriggerSensor); SAVE(RETRIGGER); break;//Retrigger
-            case 5: ADD(CurveSensor); SAVE(CURVE); break;//Curve
-            case 6: ADD(CurveFormSensor); SAVE(CURVEFORM); break;//CurveForm
-            case 7: ADD(XtalkSensor); SAVE(XTALK); break;//XTalk
-            case 8: ADD(XtalkGroupSensor); SAVE(XTALKGROUP); break;//XTalkGroup
-            case 9: TypeSensor[eMenuPage-2]=(TypeSensor[eMenuPage-2]+1)%128; SAVE(TYPE); break;//Type
-            case 10: ADD(ChokeNoteSensor); SAVE(CHOKENOTE); break;//ChokeNote
+            case 0: ADD(Note); SAVE(NOTE); break;//Note
+            case 1: ADD(Thresold); SAVE(THRESOLD); break;//Thresold
+            case 2: ADD(ScanTime); SAVE(SCANTIME); break;//ScanTime
+            case 3: ADD(MaskTime); SAVE(MASKTIME); break;//MaskTime
+            case 4: ADD(Retrigger); SAVE(RETRIGGER); break;//Retrigger
+            case 5: TADD(Curve,curve); SAVE(CURVE); break;//Curve
+            case 6: ADD(CurveForm); SAVE(CURVEFORM); break;//CurveForm
+            case 7: ADD(Xtalk); SAVE(XTALK); break;//XTalk
+            case 8: ADD(XtalkGroup); SAVE(XTALKGROUP); break;//XTalkGroup
+            case 9: Pin[eMenuPage-2].Type=(type)((Pin[eMenuPage-2].Type+1)%128); SAVE(TYPE); break;//Type
+            case 10: ADD(ChokeNote); SAVE(CHOKENOTE); break;//ChokeNote
             #if ENABLE_CHANNEL
-            case 11:  ADD(ChannelSensor); SAVE(CHANNEL); break;//Channel
+            case 11:  ADD(Channel); SAVE(CHANNEL); break;//Channel
             #endif
           }
         }
@@ -230,15 +280,15 @@ void Draw()
         /*char cPin[]="Pin 000";
         cPin[6]+=(eMenuPage-2)%10;
         cPin[5]+=(eMenuPage-2)/10;*/
-        #if WAVTRIGGER
-        wtPrintName((eMenuPage-2),false);
+        #if USE_DEFAULT_NAME
+        DefaultPrintName((eMenuPage-2),false);
         #else
         MenuString(S_PIN,false);
         #endif
         MenuString((eMenuPage-2),eMenuSelect==0);
 
       }
-      else if (eMenuPage==50) {if(Mode==ToolMode) Diagnostic=true; else MenuString(S_LOGDIS,false);}//MenuString(S_LOG,eMenuSelect==0);
+      else if (eMenuPage==50) {if(Mode==Tool) Diagnostic=true; else MenuString(S_LOGDIS,false);}//MenuString(S_LOG,eMenuSelect==0);
       //else if (eMenuPage==51) { MenuString(S_NULL,eMenuSelect==0);  lcd.setCursor(16,1);  lcd.autoscroll(); }
 
       
@@ -248,10 +298,10 @@ void Draw()
       {
         switch(Mode)
         {
-          case OffMode: MenuString(S_OFF,eMenuSelect==1); break;
-          case StandbyMode: MenuString(S_STANDBY,eMenuSelect==1); break;
-          case MIDIMode: MenuString(S_MIDI,eMenuSelect==1); break;
-          case ToolMode: MenuString(S_TOOL,eMenuSelect==1); break;
+          case Off: MenuString(S_OFF,eMenuSelect==1); break;
+          case Standby: MenuString(S_STANDBY,eMenuSelect==1); break;
+          case MIDI: MenuString(S_MIDI,eMenuSelect==1); break;
+          case Tool: MenuString(S_TOOL,eMenuSelect==1); break;
         }
       }
       else if(eMenuPage==1)
@@ -269,7 +319,7 @@ void Draw()
       }
       else if(eMenuPage>=2 && eMenuPage<50)
       {
-        if(Mode==ToolMode) 
+        if(Mode==Tool) 
           return;
               
         switch(eMenuPin)
@@ -285,7 +335,7 @@ void Draw()
           case 8: MenuString(S_XTALKG,eMenuSelect==1); break;
           case 9: MenuString(S_TYPE,eMenuSelect==1); break;
           case 10:
-          if(TypeSensor[eMenuPage-2]==PIEZO)
+          if(Pin[eMenuPage-2].Type==Piezo)
             MenuString(S_GAIN,eMenuSelect==1);
           else
             MenuString(S_CKNOTE,eMenuSelect==1); 
@@ -310,7 +360,7 @@ void Draw()
       {
         if(eMenuGeneral==0) MenuString(delayTime,eMenuSelect==2);
         else if(eMenuGeneral==1) MenuString(GeneralXtalk,eMenuSelect==2);
-        #if WAVTRIGGER
+        #if USE_WAVTRIGGER
         else if(eMenuGeneral==2) 
         {
           lcd.setCursor(5,1);
@@ -327,29 +377,29 @@ void Draw()
       }
       else if(eMenuPage>=2  && eMenuPage<50)
       {
-        if(eMenuPin==0) MenuString(NoteSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==1) MenuString(ThresoldSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==2) MenuString(ScanTimeSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==3) MenuString(MaskTimeSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==4) MenuString(RetriggerSensor[eMenuPage-2],eMenuSelect==2);
+        if(eMenuPin==0) MenuString(Pin[eMenuPage-2].Note,eMenuSelect==2);
+        else if(eMenuPin==1) MenuString(Pin[eMenuPage-2].Thresold,eMenuSelect==2);
+        else if(eMenuPin==2) MenuString(Pin[eMenuPage-2].ScanTime,eMenuSelect==2);
+        else if(eMenuPin==3) MenuString(Pin[eMenuPage-2].MaskTime,eMenuSelect==2);
+        else if(eMenuPin==4) MenuString(Pin[eMenuPage-2].Retrigger,eMenuSelect==2);
         else if(eMenuPin==5)
        {
-         switch(CurveSensor[eMenuPage-2])
+         switch(Pin[eMenuPage-2].Curve)
          {
            case 0: MenuString(S_LIN,eMenuSelect==2); break;
            case 1: MenuString(S_EXP,eMenuSelect==2); break;
            case 2: MenuString(S_LOG,eMenuSelect==2); break;
            case 3: MenuString(S_SGM,eMenuSelect==2); break;
            case 4: MenuString(S_FLT,eMenuSelect==2); break;
-           default: MenuString(CurveSensor[eMenuPage-2],eMenuSelect==2);
+           default: MenuString(Pin[eMenuPage-2].Curve,eMenuSelect==2);
          }
        }
-        else if(eMenuPin==6) MenuString(CurveFormSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==7) MenuString(XtalkSensor[eMenuPage-2],eMenuSelect==2);
-        else if(eMenuPin==8) MenuString(XtalkGroupSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==6) MenuString(Pin[eMenuPage-2].CurveForm,eMenuSelect==2);
+        else if(eMenuPin==7) MenuString(Pin[eMenuPage-2].Xtalk,eMenuSelect==2);
+        else if(eMenuPin==8) MenuString(Pin[eMenuPage-2].XtalkGroup,eMenuSelect==2);
         else if(eMenuPin==9)
        {
-         switch(TypeSensor[eMenuPage-2])
+         switch(Pin[eMenuPage-2].Type)
          {
            case 0: MenuString(S_PIEZO,eMenuSelect==2); break;
            case 1: MenuString(S_SWITCH,eMenuSelect==2); break;
@@ -360,10 +410,10 @@ void Draw()
            case 127: MenuString(S_DISABLED,eMenuSelect==2); break;
          }
        }
-        else if(eMenuPin==10) MenuString(ChokeNoteSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==10) MenuString(Pin[eMenuPage-2].ChokeNote,eMenuSelect==2);
         else if(eMenuPin==11) MenuString(DualSensor(eMenuPage-2),eMenuSelect==2);
         #if ENABLE_CHANNEL
-        else if(eMenuPin==12) MenuString(ChannelSensor[eMenuPage-2],eMenuSelect==2);
+        else if(eMenuPin==12) MenuString(Pin[eMenuPage-2].Channel,eMenuSelect==2);
         #endif
       }
       /*else if(eMenuPage==50)
@@ -393,7 +443,7 @@ void Draw()
   }
   else if(eMenuSelect==1)
       {
-        if(eMenuPage==0) Mode=Mode-1>-1?Mode-1:3; //MODE
+        if(eMenuPage==0) Mode=(mode)((int)Mode-1>-1?(int)Mode-1:3); //MODE
         else if(eMenuPage==1) eMenuGeneral=eMenuGeneral-1>-1?eMenuGeneral-1:6; //General
         else if(eMenuPage>=2 && eMenuPage<50) eMenuPin=eMenuPin-1>-1?eMenuPin-1:11; //Pin
         else if(eMenuPage==50) eMenuPage=(eMenuPage-1)>-1?eMenuPage-1:50;//eMenuLog=eMenuLog-1>-1?eMenuLog-1:1;//Log
@@ -404,7 +454,7 @@ void Draw()
         {
           /*if(eMenuGeneral==0) delayTime=delayTime-1>-1?delayTime-1:999;//Delay
           else*/ if(eMenuGeneral==1) GeneralXtalk=(GeneralXtalk-1>-1)?GeneralXtalk-1:7;//General XTalk
-          #if WAVTRIGGER
+          #if USE_WAVTRIGGER
           else if(eMenuGeneral==2) kit=(kit-1>-1)?kit-1:3;
           #endif
           else if(eMenuGeneral==3) { HHThresoldSensor[0]=((HHThresoldSensor[0]-1)>-1)?HHThresoldSensor[0]-1:127; SaveHHEEPROM(0x04,HHThresoldSensor[0]); }
@@ -416,19 +466,19 @@ void Draw()
         {
           switch(eMenuPin)
           {
-            case 0: SUB(NoteSensor); SAVE(NOTE); break;//Note
-            case 1: SUB(ThresoldSensor); SAVE(THRESOLD); break;//Thresold
-            case 2: SUB(ScanTimeSensor); SAVE(SCANTIME); break;//ScanTime
-            case 3: SUB(MaskTimeSensor); SAVE(MASKTIME); break;//MaskTime
-            case 4: SUB(RetriggerSensor); SAVE(RETRIGGER); break;//Retrigger
-            case 5: SUB(CurveSensor); SAVE(CURVE); break;//Curve
-            case 6: SUB(CurveFormSensor); SAVE(CURVEFORM); break;//CurveForm
-            case 7: SUB(XtalkSensor); SAVE(XTALK); break;//XTalk
-            case 8: SUB(XtalkGroupSensor); SAVE(XTALKGROUP); break;//XTalkGroup
-            case 9: SUB(TypeSensor); SAVE(TYPE); break;//Type
-            case 10: SUB(ChokeNoteSensor); SAVE(CHOKENOTE); break;//ChokeNote
+            case 0: SUB(Note); SAVE(NOTE); break;//Note
+            case 1: SUB(Thresold); SAVE(THRESOLD); break;//Thresold
+            case 2: SUB(ScanTime); SAVE(SCANTIME); break;//ScanTime
+            case 3: SUB(MaskTime); SAVE(MASKTIME); break;//MaskTime
+            case 4: SUB(Retrigger); SAVE(RETRIGGER); break;//Retrigger
+            case 5: TSUB(Curve,curve); SAVE(CURVE); break;//Curve
+            case 6: SUB(CurveForm); SAVE(CURVEFORM); break;//CurveForm
+            case 7: SUB(Xtalk); SAVE(XTALK); break;//XTalk
+            case 8: SUB(XtalkGroup); SAVE(XTALKGROUP); break;//XTalkGroup
+            case 9: TSUB(Type,type); SAVE(TYPE); break;//Type
+            case 10: SUB(ChokeNote); SAVE(CHOKENOTE); break;//ChokeNote
             #if ENABLE_CHANNEL
-            case 11: SUB(ChannelSensor); SAVE(CHANNEL); break;//Channel
+            case 11: SUB(Channel); SAVE(CHANNEL); break;//Channel
             #endif
           }
         }
@@ -491,6 +541,39 @@ void DrawLog(byte x)
   }*/
 }
 
+#endif
+
+//========================================
+//   PRINTNAME
+//========================================
+#if USE_DEFAULT_NAME
+void DefaultPrintName(byte pin,bool sel)
+{
+  switch(pin)
+  {
+    case DP_SNAREHEAD: MenuString(S_SNAREHEAD,sel); break;
+    case DP_SNARERIM: MenuString(S_SNARERIM,sel); break;
+    case DP_KICK: MenuString(S_KICK,sel); break;
+    case DP_HHC: MenuString(S_HHC,sel); break;
+    case DP_HHBOW: MenuString(S_HHBOW,sel); break;
+    case DP_HHEDGE: MenuString(S_HHEDGE,sel); break;
+    case DP_EFFECT: MenuString(S_EFFECT,sel); break;
+    case DP_CRASHBOW: MenuString(S_CRASHBOW,sel); break;
+    case DP_CRASHEDGE: MenuString(S_CRASHEDGE,sel); break;
+    case DP_RIDEBOW: MenuString(S_RIDEBOW,sel); break;
+    case DP_RIDEEDGE: MenuString(S_RIDEEDGE,sel); break;
+    case DP_TOM1HEAD: MenuString(S_TOM1HEAD,sel); break;
+    case DP_TOM2HEAD: MenuString(S_TOM2HEAD,sel); break;
+    case DP_TOM3HEAD: MenuString(S_TOM3HEAD,sel); break;
+    case DP_TOM4HEAD: MenuString(S_TOM4HEAD,sel); break;
+    case DP_TOM1RIM: MenuString(S_TOM1RIM,sel); break; 
+    case DP_TOM2RIM: MenuString(S_TOM2RIM,sel); break;
+    case DP_TOM3RIM: MenuString(S_TOM3RIM,sel); break; 
+    case DP_TOM4RIM: MenuString(S_TOM4RIM,sel); break;
+
+    default: MenuString(S_PIN,sel); break;
+  }
+}
 #endif
 
 void DrawDiagnostic(byte i,byte val)

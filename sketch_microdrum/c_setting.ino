@@ -1,77 +1,96 @@
 
+
+//===========SETTING============
+const byte NOTE      = 0x00;
+const byte THRESOLD  = 0x01;
+const byte SCANTIME  = 0x02;
+const byte MASKTIME  = 0x03;
+const byte RETRIGGER = 0x04;
+const byte CURVE     = 0x05;
+const byte XTALK     = 0x06;
+const byte XTALKGROUP= 0x07;
+const byte CURVEFORM = 0x08;
+const byte CHOKENOTE = 0x09;
+const byte DUAL      = 0x0A;
+const byte TYPE      = 0x0D;
+const byte CHANNEL   = 0x0E;
+//===============================
+
+
 //==============================
 //    SETTING
 //==============================
-void SendPinSetting(byte Pin,byte Set)
+void SendPinSetting(byte pin,byte Set)
 {
   if(Set==0x7F)//All
   { 
-      simpleSysex(0x02,Pin,0x00,NoteSensor[Pin]);//NOTE
-      simpleSysex(0x02,Pin,0x01,ThresoldSensor[Pin]);//THRESOLD
-      simpleSysex(0x02,Pin,0x02,ScanTimeSensor[Pin]);//SCANTIME
-      simpleSysex(0x02,Pin,0x03,MaskTimeSensor[Pin]);//MASKTIME
-      simpleSysex(0x02,Pin,0x04,RetriggerSensor[Pin]);//RETRIGGER
-      simpleSysex(0x02,Pin,0x05,CurveSensor[Pin]);//CURVE
-      simpleSysex(0x02,Pin,0x06,XtalkSensor[Pin]);//XTALK
-      simpleSysex(0x02,Pin,0x07,XtalkGroupSensor[Pin]);//XTALKGROUP
-      simpleSysex(0x02,Pin,0x08,CurveFormSensor[Pin]);//CURVEFORM
-      simpleSysex(0x02,Pin,0x09,ChokeNoteSensor[Pin]);//CHOKE
-      simpleSysex(0x02,Pin,0x0A,DualSensor(Pin));//DUAL
+      simpleSysex(0x02,pin,0x00,Pin[pin].Note);//NOTE
+      simpleSysex(0x02,pin,0x01,Pin[pin].Thresold);//THRESOLD
+      simpleSysex(0x02,pin,0x02,Pin[pin].ScanTime);//SCANTIME
+      simpleSysex(0x02,pin,0x03,Pin[pin].MaskTime);//MASKTIME
+      simpleSysex(0x02,pin,0x04,Pin[pin].Retrigger);//RETRIGGER
+      simpleSysex(0x02,pin,0x05,Pin[pin].Curve);//CURVE
+      simpleSysex(0x02,pin,0x06,Pin[pin].Xtalk);//XTALK
+      simpleSysex(0x02,pin,0x07,Pin[pin].XtalkGroup);//XTALKGROUP
+      simpleSysex(0x02,pin,0x08,Pin[pin].CurveForm);//CURVEFORM
+      simpleSysex(0x02,pin,0x09,Pin[pin].ChokeNote);//CHOKE
+      simpleSysex(0x02,pin,0x0A,DualSensor(pin));//DUAL
       //simpleSysex(0x02,Pin,0x0B,DualNoteSensor[Pin]);//DUALNOTE
       //simpleSysex(0x02,Pin,0x0C,DualThresoldSensor[Pin]);//DUALTHRESOLD
-      simpleSysex(0x02,Pin,0x0D,TypeSensor[Pin]);//TYPE
+      simpleSysex(0x02,pin,0x0D,Pin[pin].Type);//TYPE
       #if ENABLE_CHANNEL
-      simpleSysex(0x02,Pin,0x0E,ChannelSensor[Pin]);//CHANNEL
+      simpleSysex(0x02,pin,0x0E,Pin[pin].Channel);//CHANNEL
       #endif
       return;
   } 
  
-  simpleSysex(0x02,Pin,Set,GetPinSetting(Pin,Set)); 
+  simpleSysex(0x02,pin,Set,GetPinSetting(pin,Set)); 
 }
-byte GetPinSetting(byte Pin,byte Set)
+
+byte GetPinSetting(byte pin,byte Set)
 {
   byte Value=0;
   switch(Set)
   {
     case NOTE:
-      Value=NoteSensor[Pin];
+      Value=Pin[pin].Note;
     break;
     case THRESOLD:
-      Value=ThresoldSensor[Pin];
+      Value=Pin[pin].Thresold;
     break;
     case SCANTIME:
-      Value=ScanTimeSensor[Pin];
+      Value=Pin[pin].ScanTime;
     break;
     case MASKTIME:
-      Value=MaskTimeSensor[Pin];
+      Value=Pin[pin].MaskTime;
     break;
     case RETRIGGER:
-      Value=RetriggerSensor[Pin];
+      Value=Pin[pin].Retrigger;
     break;
     case CURVE:
-      Value=CurveSensor[Pin];
+      Value=Pin[pin].Curve;
     break;
     case XTALK:
-      Value=XtalkSensor[Pin];
+      Value=Pin[pin].Xtalk;
     break;
     case XTALKGROUP:
-      Value=XtalkGroupSensor[Pin];
+      Value=Pin[pin].XtalkGroup;
     break;
     case CURVEFORM:
-      Value=CurveFormSensor[Pin];
+      Value=Pin[pin].CurveForm;
     break;
     case CHOKENOTE:
-      Value=ChokeNoteSensor[Pin];
+      Value=Pin[pin].ChokeNote;
       break;
     case DUAL:
-      Value=DualSensor(Pin);
+      Value=DualSensor(pin);
       break;    
     case TYPE:
-      Value=TypeSensor[Pin];
+      Value=Pin[pin].Type;
       break;
     case CHANNEL:
     #if ENABLE_CHANNEL
-      Value=ChannelSensor[Pin];
+      Value=Pin[pin].Channel;
     #endif
       break; 
   } 
@@ -151,10 +170,10 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         Serial.flush();
         switch(Data1)
         {
-           case OffMode: Mode=OffMode; break;
-           case StandbyMode: Mode=StandbyMode; /*CheckLicense();*/ break;
-           case MIDIMode: Mode=MIDIMode; break;
-           case ToolMode: Mode=ToolMode; break;
+           case Off: Mode=Off; break;
+           case Standby: Mode=Standby; /*CheckLicense();*/ break;
+           case MIDI: Mode=MIDI; break;
+           case Tool: Mode=Tool; break;
         } 
         simpleSysex(0x01,Mode,0x00,0x00);
       break;
@@ -216,20 +235,20 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         {
            switch(Data2)
           {
-            case NOTE: NoteSensor[Data1]=Data3; break;
-            case THRESOLD: ThresoldSensor[Data1]=Data3; break;
-            case SCANTIME: ScanTimeSensor[Data1]=Data3; break;
-            case MASKTIME: MaskTimeSensor[Data1]=Data3; break;
-            case RETRIGGER: RetriggerSensor[Data1]=Data3; break;
-            case CURVE: CurveSensor[Data1]=Data3; break;
-            case XTALK: XtalkSensor[Data1]=Data3; break;
-            case XTALKGROUP: XtalkGroupSensor[Data1]=Data3; break;
-            case CURVEFORM: CurveFormSensor[Data1]=Data3; break;
-            case CHOKENOTE: ChokeNoteSensor[Data1]=Data3; break;
+            case NOTE: Pin[Data1].Note=Data3; break;
+            case THRESOLD: Pin[Data1].Thresold=Data3; break;
+            case SCANTIME: Pin[Data1].ScanTime=Data3; break;
+            case MASKTIME: Pin[Data1].MaskTime=Data3; break;
+            case RETRIGGER: Pin[Data1].Retrigger=Data3; break;
+            case CURVE: Pin[Data1].Curve=(curve)Data3; break;
+            case XTALK: Pin[Data1].Xtalk=Data3; break;
+            case XTALKGROUP: Pin[Data1].XtalkGroup=Data3; break;
+            case CURVEFORM: Pin[Data1].CurveForm=Data3; break;
+            case CHOKENOTE: Pin[Data1].ChokeNote=Data3; break;
             //case 0x0A: DualSensor[Data1]=Data3; break; //DUAL
-            case TYPE: TypeSensor[Data1]=Data3; break;
+            case TYPE: Pin[Data1].Type=(type)Data3; break;
             #if ENABLE_CHANNEL
-            case CHANNEL: ChannelSensor[Data1]=Data3; break;
+            case CHANNEL: Pin[Data1].Channel=Data3; break;
             #endif
                          
           }
@@ -254,7 +273,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         }
       break;
       case 0x6D:
-      #if PROF
+      #if USE_PROFILER
         if(Data1==0)
         {
           TimeProf=0;
@@ -274,6 +293,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       case 0x6F:
         Diagnostic=(Data1==1);
       break;
+      /*
       #if LICENSE
       case 0x60://License
         if(LicenseData[0]==Data1 && LicenseData[1]==Data2)
@@ -299,6 +319,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
         }
       break;
       #endif
+      */
       case 0x61:
 #if defined(__AVR__)
         simpleSysex(0x61,Data1,Data2,EEPROM.read((Data1*256)+Data2));
@@ -307,7 +328,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
       
       case 0x7F: //RESET
         Serial.flush();
-        Mode=OffMode;
+        Mode=Off;
         softReset();
         //simpleSysex(0x7F,0x00,0x00,0x00);
       break;
@@ -325,13 +346,13 @@ void Input()
   
   if (Serial.available() > 6)
   {
-    int Start=Serial.read();
-    int ID=Serial.read(); 
+    byte Start=Serial.read();
+    byte ID=Serial.read(); 
     int Cmd=Serial.read();
     int Data1=Serial.read();
     int Data2=Serial.read();
     int Data3=Serial.read();
-    int End=Serial.read();
+    byte End=Serial.read();
     
     ExecCommand(Cmd,Data1,Data2,Data3);
   }

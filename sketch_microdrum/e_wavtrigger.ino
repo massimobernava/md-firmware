@@ -2,10 +2,20 @@
 //==============================
 //    WAVTRIGGER: http://robertsonics.com/wav-trigger/
 //==============================
-#if WAVTRIGGER
+#if USE_WAVTRIGGER
 
 #define MAX_POLYPHONIC 15
 #define VOLUME_SCALE 3
+
+const byte FAT_STACKS = 0;
+const byte BOXER = 1;
+const byte BOMBASTIX = 2;
+const byte CUSTOM = 3;
+const byte FIXED = 4;
+
+byte kit=BOMBASTIX;
+
+SoftwareSerial mySerial(6, 5); // RX, TX
 
 /*
 A1 Snare         6/4
@@ -68,7 +78,6 @@ D3 China/Splash  18/17
 #endif
 
 
-
 //WAV TRIGGER SOUND
 #define WTS_HHBOW_CLOSED 0x00
 #define WTS_HHBOW_OPEN25 0x01
@@ -103,27 +112,6 @@ D3 China/Splash  18/17
 #define WTS_EFFECT1 0x1E
 #define WTS_EFFECT2 0x1F
 
-//WAV TRIGGER STRING
-#define WTN_SNAREHEAD PSTR("Snare Head")
-#define WTN_SNARERIM PSTR("Snare Rim")
-#define WTN_EFFECT PSTR("Effect")
-#define WTN_KICK PSTR("Kick")
-#define WTN_HHC PSTR("HHC")
-#define WTN_HHBOW PSTR("HH Bow")
-#define WTN_HHEDGE PSTR("HH Edge")
-#define WTN_TOM1HEAD PSTR("Tom1 Head")
-#define WTN_TOM1RIM PSTR("Tom1 Rim")
-#define WTN_TOM2HEAD PSTR("Tom2 Head")
-#define WTN_TOM2RIM PSTR("Tom2 Rim")
-#define WTN_CRASHBOW PSTR("Crash Bow")
-#define WTN_CRASHEDGE PSTR("Crash Edge")
-#define WTN_RIDEBOW PSTR("Ride Bow")
-#define WTN_RIDEEDGE PSTR("Ride Edge")
-#define WTN_TOM3HEAD PSTR("Tom3 Head")
-#define WTN_TOM3RIM PSTR("Tom3 Rim")
-#define WTN_TOM4HEAD PSTR("Tom4 Head")
-#define WTN_TOM4RIM PSTR("Tom4 Rim")
-
 //========================================
 // GENERAL
 //========================================
@@ -141,6 +129,8 @@ void wavChoke(byte pin)
       case FAT_STACKS: wavChoke_FS(pin); break;
       case BOXER: wavChoke_BX(pin); break;
       case BOMBASTIX: wavChoke_BM(pin); break;
+      case CUSTOM: wavChoke_Custom(pin); break;
+      case FIXED: wavChoke_Fixed(pin); break;
     }
 }
 
@@ -161,6 +151,8 @@ void wavTrigger(byte pin, byte velocity) {
       case FAT_STACKS: wavTrigger_FS(pin,velocity);break;
       case BOXER: wavTrigger_BX(pin,velocity); break;
       case BOMBASTIX: wavTrigger_BM(pin,velocity); break;
+      case CUSTOM: wavTrigger_Custom(pin,velocity); break;
+      case FIXED: wavTrigger_Fixed(pin,velocity); break;
     }
 }
 
@@ -181,7 +173,7 @@ short Pin2Sound(byte pin)
       case WTP_RIDEEDGE: return WTS_RIDE_EDGE;
       case WTP_CRASHBOW: return WTS_CRASH1_BOW;
       case WTP_CRASHEDGE: return WTS_CRASH1_EDGE;
-      case WTP_HHBOW: if(TypeSensor[WTP_HHC]==HHC)
+      case WTP_HHBOW: if(Pin[WTP_HHC].Type==HHC)
                       { 
                         if(WT_HHC>HHThresoldSensor[0]) { return WTS_HHBOW_OPEN;}
                         else if(WT_HHC>HHThresoldSensor[1]) { return WTS_HHBOW_OPEN75; }
@@ -194,32 +186,103 @@ short Pin2Sound(byte pin)
       
     }
 }
-//========================================
-//Salamander
-//========================================
-const byte ROUND_ROBIN_SL= 12;
+const byte dNOTEON=1;
+const byte dDELAY=2;
 
-const short StartWav_SL[32]={361,265,289,337,313, //HH TT/TC/TL/TS/TO
-                    217,121,145,193,169, //HH ET/EC/EL/ES/EO
-                    247,241, //PD - FS
-                    523,565, //SNARE
-                    1,//KICK
-		    691,691,727,727,763,763,763,763,//TOM
-		    439,439,421,//RIDE EG/BW/BL
-		    37,1,//CRASH EG/BL
-		    97,61,//CRASH EG/BL
-		    655,673};//EFFECT
+const byte DEMO_LENGTH = 10;
+const byte demo_song[] PROGMEM={ dNOTEON,WTP_SNAREHEAD,120,
+                         dDELAY,500,
+                         dNOTEON,WTP_KICK,120,
+                         dDELAY,500};
+void demo(byte repeat)
+{
+  while(repeat--)
+  for(byte d=0;d<DEMO_LENGTH;d++)
+  {
+    if(pgm_read_byte_near(demo_song+d)==dNOTEON)
+    {
+      wavTrigger(pgm_read_byte_near(demo_song+d+1),pgm_read_byte_near(demo_song+d+2));
+      d+=2;
+    }
+    else if(pgm_read_byte_near(demo_song+d)==dDELAY)
+    {
+      d++;
+      delay(pgm_read_byte_near(demo_song+d));
+    }
+  }
+  
+  
+}
+//========================================
+//Custom
+//========================================
 
-const byte CountWav_SL[32]={4,4,4,4,4,
-                   4,4,4,4,4,
-                   3,1, //HH
-		   7,4, //SNARE
-		   3,//KICK
-		   6,6,6,6,6,6,6,6,//TOM
-		   3,3,3,//RIDE
-		   3,3,//CRASH
-		   3,3,//CRASH
-		   3,3};//EFFECT
+byte RR_VL[32]={
+                   0x64,0x64,0x64,0x64,0x64,
+                   0x64,0x64,0x64,0x64,0x64,
+                   0x63,0x61, //HH
+		   0x67,0x64, //SNARE
+		   0x63,//KICK
+		   0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,//TOM
+		   0x63,0x63,0x63,//RIDE
+		   0x63,0x63,//CRASH
+		   0x63,0x63,//CRASH
+		   0x63,0x63//EFFECT
+                  };
+
+void wavChoke_Custom(byte pin)
+{
+  //ferma tutti i suoni appartenetnti a quel pin, possibilmente con un fade
+  /*byte from=0,to=0;
+  switch(pin)
+  {
+    case WTP_CRASHEDGE: wavTriggerFade(StartWav_BX[WTS_CRASH1_EDGE],CountWav_BX[WTS_CRASH1_EDGE],ROUND_ROBIN_BX); wavTriggerFade(StartWav_BX[WTS_CRASH1_BOW],CountWav_BX[WTS_CRASH1_BOW],ROUND_ROBIN_BX); break;
+    case WTP_RIDEEDGE:  wavTriggerFade(StartWav_BX[WTS_RIDE_EDGE],CountWav_BX[WTS_RIDE_EDGE],ROUND_ROBIN_BX); wavTriggerFade(StartWav_BX[WTS_RIDE_BOW],CountWav_BX[WTS_RIDE_BOW],ROUND_ROBIN_BX); break;
+    case WTP_HHBOW: wavTriggerFade(StartWav_BX[WTS_HHBOW_OPEN],CountWav_BX[WTS_HHBOW_OPEN],ROUND_ROBIN_BX); wavTriggerFade(StartWav_BX[WTS_HHBOW_OPEN75],CountWav_BX[WTS_HHBOW_OPEN75],ROUND_ROBIN_BX); wavTriggerFade(StartWav_BX[WTS_HHBOW_OPEN50],CountWav_BX[WTS_HHBOW_OPEN50],ROUND_ROBIN_BX); wavTriggerFade(StartWav_BX[WTS_HHBOW_OPEN25],CountWav_BX[WTS_HHBOW_OPEN25],ROUND_ROBIN_BX);break;
+  }*/
+}
+
+void wavTrigger_Custom(byte pin, byte velocity)
+{
+  byte sound=Pin2Sound(pin);
+  if(RR_VL[sound]<0x10) return;
+  
+  short start=0;
+
+  for(byte i=0;i<sound;i++)
+    start+=(RR_VL[i]>>4)*(RR_VL[i]&0xF);
+		
+  byte rr=RR_VL[sound]>>4;
+  byte vlevel=RR_VL[sound]&0x0F;
+    
+  //int n=start+(vlevel*velocity/128)+random(0,rr)*vlevel;//OLD SOUNd->RR->LEVEL
+  int n=start+(vlevel*velocity/128)*rr+random(0,rr);//NEW SOUND->LEVEL->RR
+  
+  int vol= -0.5 + (float)((float)velocity-127.0)/VOLUME_SCALE;
+  wavTriggerPlay(n,vol); 
+}
+
+//========================================
+//Fixed
+//========================================
+const byte ROUND_ROBIN = 5;
+const byte V_LEVEL = 6;
+
+void wavChoke_Fixed(byte pin)
+{
+  
+}
+
+void wavTrigger_Fixed(byte pin, byte velocity)
+{
+  byte sound=Pin2Sound(pin);
+  short start=sound*ROUND_ROBIN*V_LEVEL;
+  
+  int n=start+(V_LEVEL*velocity/128)+random(0,ROUND_ROBIN)*V_LEVEL;
+    
+  int vol= -0.5 + (float)((float)velocity-127.0)/VOLUME_SCALE;
+  wavTriggerPlay(n,vol); 
+}
 
 //========================================
 //Analogue Drums
@@ -295,7 +358,7 @@ void wavTrigger_BX(byte pin, byte velocity)
       case WTP_RIDEEDGE: start=StartWav_BX[WTS_RIDE_EDGE]; count=CountWav_BX[WTS_RIDE_EDGE]; break;
       case WTP_CRASHBOW: start=StartWav_BX[WTS_CRASH1_BOW]; count=CountWav_BX[WTS_CRASH1_BOW]; break;
       case WTP_CRASHEDGE: start=StartWav_BX[WTS_CRASH1_EDGE]; count=CountWav_BX[WTS_CRASH1_EDGE]; break;
-      case WTP_HHBOW: if(TypeSensor[WTP_HHC]==HHC)
+      case WTP_HHBOW: if(Pin[WTP_HHC].Type==HHC)
                       { 
                         if(WT_HHC>48) {start=StartWav_BX[WTS_HHBOW_OPEN]; count=CountWav_BX[WTS_HHBOW_OPEN];}
                         else if(WT_HHC>36) {start=StartWav_BX[WTS_HHBOW_OPEN75]; count=CountWav_BX[WTS_HHBOW_OPEN75];}
@@ -380,7 +443,7 @@ void wavTrigger_FS(byte pin, byte velocity)
       case WTP_RIDEEDGE: start=StartWav_FS[WTS_RIDE_EDGE]; count=CountWav_FS[WTS_RIDE_EDGE]; break;
       case WTP_CRASHBOW: start=StartWav_FS[WTS_CRASH1_BOW]; count=CountWav_FS[WTS_CRASH1_BOW]; break;
       case WTP_CRASHEDGE: start=StartWav_FS[WTS_CRASH1_EDGE]; count=CountWav_FS[WTS_CRASH1_EDGE]; break;
-      case WTP_HHBOW: if(TypeSensor[WTP_HHC]==HHC)
+      case WTP_HHBOW: if(Pin[WTP_HHC].Type==HHC)
                       { 
                         if(WT_HHC>48) {start=StartWav_FS[WTS_HHBOW_OPEN]; count=CountWav_FS[WTS_HHBOW_OPEN];}
                         else if(WT_HHC>36) {start=StartWav_FS[WTS_HHBOW_OPEN75]; count=CountWav_FS[WTS_HHBOW_OPEN75];}
@@ -472,7 +535,7 @@ void wavTrigger_BM(byte pin, byte velocity)
       case WTP_RIDEEDGE: start=StartWav_BM[WTS_RIDE_EDGE]; count=CountWav_BM[WTS_RIDE_EDGE]; break;
       case WTP_CRASHBOW: start=StartWav_BM[WTS_CRASH1_BOW]; count=CountWav_BM[WTS_CRASH1_BOW]; break;
       case WTP_CRASHEDGE: start=StartWav_BM[WTS_CRASH1_EDGE]; count=CountWav_BM[WTS_CRASH1_EDGE]; break;
-      case WTP_HHBOW: if(TypeSensor[WTP_HHC]==HHC)
+      case WTP_HHBOW: if(Pin[WTP_HHC].Type==HHC)
                       { 
                         if(WT_HHC>HHThresoldSensor[0]) {start=StartWav_BM[WTS_HHBOW_OPEN]; count=CountWav_BM[WTS_HHBOW_OPEN];}
                         else if(WT_HHC>HHThresoldSensor[1]) {start=StartWav_BM[WTS_HHBOW_OPEN75]; count=CountWav_BM[WTS_HHBOW_OPEN75];}
@@ -494,42 +557,6 @@ void wavTrigger_BM(byte pin, byte velocity)
     //2Box
     //int n=start+/*floor*/(count*velocity/127)/*+random*/;
 }
-
-//========================================
-//   PRINTNAME
-//========================================
-#if MENU
-void wtPrintName(byte pin,bool sel)
-{
-  switch(pin)
-  {
-    case WTP_SNAREHEAD: MenuString(WTN_SNAREHEAD,sel); break;
-    case WTP_SNARERIM: MenuString(WTN_SNARERIM,sel); break;
-    case WTP_KICK: MenuString(WTN_KICK,sel); break;
-    case WTP_HHC: MenuString(WTN_HHC,sel); break;
-    case WTP_HHBOW: MenuString(WTN_HHBOW,sel); break;
-    case WTP_HHEDGE: MenuString(WTN_HHEDGE,sel); break;
-    case WTP_EFFECT: MenuString(WTN_EFFECT,sel); break;
-    case WTP_CRASHBOW: MenuString(WTN_CRASHBOW,sel); break;
-    case WTP_CRASHEDGE: MenuString(WTN_CRASHEDGE,sel); break;
-    case WTP_RIDEBOW: MenuString(WTN_RIDEBOW,sel); break;
-    case WTP_RIDEEDGE: MenuString(WTN_RIDEEDGE,sel); break;
-    case WTP_TOM1HEAD: MenuString(WTN_TOM1HEAD,sel); break;
-    case WTP_TOM2HEAD: MenuString(WTN_TOM2HEAD,sel); break;
-    case WTP_TOM3HEAD: MenuString(WTN_TOM3HEAD,sel); break;
-    case WTP_TOM4HEAD: MenuString(WTN_TOM4HEAD,sel); break;
-    
-    #if WT_24
-    case WTP_TOM1RIM: MenuString(WTN_TOM1RIM,sel); break; 
-    case WTP_TOM2RIM: MenuString(WTN_TOM2RIM,sel); break;
-    case WTP_TOM3RIM: MenuString(WTN_TOM3RIM,sel); break; 
-    case WTP_TOM4RIM: MenuString(WTN_TOM4RIM,sel); break;
-    #endif
-
-    default: MenuString(S_PIN,sel); break;
-  }
-}
-#endif
 
 //========================================
 //  DRIVER

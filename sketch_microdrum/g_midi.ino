@@ -32,7 +32,7 @@ void midiMsg(byte cmd, byte data1, byte data2) {
 //=============SYSEX=========
 void simpleSysex(byte cmd,byte data1,byte data2,byte data3)
 {
-  #if MENU
+  #if USE_LCD
   if(cmd==0x6F) DrawDiagnostic(data1,data2);
   #endif
           

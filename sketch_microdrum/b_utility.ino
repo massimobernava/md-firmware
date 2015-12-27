@@ -1,4 +1,84 @@
 
+
+//=================================
+//   MENU LOG
+//=================================
+#if MENU_LOG
+byte log_state=0;
+byte log_Nmax=0;  //Max noise
+
+unsigned long log_T1=0; //Start hit time
+//unsigned long log_T2=0;
+unsigned long log_Tmax=0;  //Max hit time
+int log_Vmax=0;   //Max hit value
+
+//byte log_note=0;
+//byte log_oldState=0;
+//short log_Show=0;
+
+/*unsigned long log_T80=0;
+unsigned long log_T70=0;
+unsigned long log_T60=0;*/
+unsigned long log_T50=0;  //Half value hit time
+/*unsigned long log_T40=0;
+unsigned long log_T30=0;
+unsigned long log_T20=0;*/
+
+unsigned long d_hsum=0;  //Sum Tmax
+unsigned long d_tsum=0;  //Sum T50
+unsigned long d_hsum2=0;  //Sum Tmax^2
+unsigned long d_tsum2=0;  //Sum T50^2
+byte d_tnum=0;  //Hit number
+byte d_rmin=0;
+int d_vmax=0; //Total max hit value
+int d_vmin=1024;  //Total min hit value
+int d_vmean=0;  //Total min hit value
+#endif
+//=================================
+
+//===============================
+//   LOG
+//===============================
+byte LogPin=0xFF;
+byte LogThresold=0xFF;
+
+short N=0;//Unsent log
+
+bool Diagnostic=false;
+//===============================
+
+//===============================
+//  PRESCALER
+//===============================
+// Maximum sampling frequency    // Resolution
+enum Prescaler {
+  Prescaler_2 = B00000000, // 16 MHz / 2 = 8 MHz            //
+  Prescaler_4 = B00000010, // 16 MHz / 4 = 4 MHz            // ~5.9
+  Prescaler_8 = B00000011, // 16 MHz / 8 = 2 MHz            // ~7.4
+  Prescaler_16 = B00000100, // 16 MHz / 16 = 1 MHz           // ~8.6
+  Prescaler_32 = B00000101, // 16 MHz / 32 = 500 kHz         // ~8.9
+  Prescaler_64 = B00000110, // 16 MHz / 64 = 250 kHz         // ~9.0
+  Prescaler_128 = B00000111, // 16 MHz / 128 = 125 kHz        // ~9.1
+};
+
+inline void setPrescaler(int prescaler) {
+  ADCSRA &= B11111000;
+  ADCSRA |= prescaler;
+}
+//===============================
+
+//==============================
+//   PROFILING 
+//==============================
+#define PROFA TimeProfA=micros();
+#define PROFB TimeProf+=(micros()-TimeProfA); NProf++;
+#if USE_PROFILER
+unsigned long TimeProfA;
+unsigned long TimeProf=0;
+unsigned long NProf=0;
+#endif
+//==============================
+
 //==============================
 //    SENDLOG
 //==============================
@@ -42,7 +122,7 @@ void SendLog(byte Sensor,int N,int Y0,int MaxRetrigger,int MaxReading,byte State
 //==============================
 //    SENDPROFILING
 //==============================
-#if PROF
+#if USE_PROFILER
 void SendProfiling()
 {
   byte buf[8];
@@ -58,28 +138,6 @@ void SendProfiling()
   buf[7] = (byte) (NProf >> 24);
   
   Sysex(0x6D,buf,8);
-}
-#endif
-
-//==============================
-//    LICENSE
-//==============================
-#if LICENSE
-void CheckLicense()
-{
-  //byte LicenseHash=PearsonHash(LicenseData,2);
-  simpleSysex(0x60,LicenseData[0],LicenseData[1],0x00);
-}
-byte PearsonHash(byte* in,byte size)
-{
- byte h=0;
- for(int i=0;i<size;i++)
- {
-   byte index=(byte)(h^in[i]);
-   //simpleSysex(0x61,index,0x00,0x00);
-   h=Permutation[index%32];
- } 
- return h;
 }
 #endif
 
@@ -219,8 +277,8 @@ void LogTool(int yn_0,byte MulSensor)
       
       if(d_tnum==25)
       {
-        ChokeNoteSensor[MulSensor]=(40.0/(float)(d_vmean/25))*64.0; //GAIN
-        if (ChokeNoteSensor[MulSensor] <16) ChokeNoteSensor[MulSensor]=16;
+        Pin[MulSensor].Gain=(40.0/(float)(d_vmean/25))*64.0;
+        if (Pin[MulSensor].Gain <16) Pin[MulSensor].Gain=16;
         
         log_T1=TIMEFUNCTION;
         log_Nmax=0;
@@ -242,12 +300,12 @@ void LogTool(int yn_0,byte MulSensor)
       }
       else if(d_tnum==50)
      {
-       ThresoldSensor[MulSensor]=log_Nmax;
-       ScanTimeSensor[MulSensor]=(d_tsum/25)+(sqrt((25*d_tsum2)-(d_tsum*d_tsum))/25);
-       MaskTimeSensor[MulSensor]=(d_hsum/25)+(sqrt((25*d_hsum2)-(d_hsum*d_hsum))/25);
-       RetriggerSensor[MulSensor]=d_rmin;
-       CurveFormSensor[MulSensor]=(1024/d_vmax)*32;
-       CurveSensor[MulSensor]=0;
+       Pin[MulSensor].Thresold=log_Nmax;
+       Pin[MulSensor].ScanTime=(d_tsum/25)+(sqrt((25*d_tsum2)-(d_tsum*d_tsum))/25);
+       Pin[MulSensor].MaskTime=(d_hsum/25)+(sqrt((25*d_hsum2)-(d_hsum*d_hsum))/25);
+       Pin[MulSensor].Retrigger=d_rmin;
+       Pin[MulSensor].CurveForm=(1024/d_vmax)*32;
+       Pin[MulSensor].Curve=Linear;
        
        DrawLog(3);
        log_state=5; //END
@@ -267,7 +325,7 @@ void LogTool(int yn_0,byte MulSensor)
   #else
     N++;
     if(yn_0>=(LogThresold*2))
-    SendLog(MulSensor,N,yn_0,UseCurve(CurveSensor[MulSensor],MaxReadingSensor[MulSensor],CurveFormSensor[MulSensor]),MaxReadingSensor[MulSensor],StateSensor[MulSensor]);
+    SendLog(MulSensor,N,yn_0,UseCurve(Pin[MulSensor].Curve,Pin[MulSensor].MaxReading,Pin[MulSensor].CurveForm),Pin[MulSensor].MaxReading,Pin[MulSensor].State);
   #endif  
 }
 
@@ -285,113 +343,52 @@ void PlaySensorTOOLMode(byte i)
     MaxReadingSensor[i] = -1;
     return;
   }*/
-  if(TypeSensor[i]==SWITCH)
+  if(Pin[i].Type==Switch)
   { 
-    simpleSysex(0x6F,i,MaxReadingSensor[i],0);
+    simpleSysex(0x6F,i,Pin[i].MaxReading,0);
     
-    if(StateSensor[i]==SWITCH_TIME)
+    if(Pin[i].State==Switch_Time)
     {   
-      StateSensor[i]=MASK_TIME;
-      MaxReadingSensor[i] = -1;
+      Pin[i].State=Mask_Time;
+      Pin[i].MaxReading = -1;
     }
     return;
   }
   //===============================
   //          YSwitch
   //===============================
-  if(TypeSensor[i]==5)
+  if(Pin[i].Type==YSwitch)
   {
-    simpleSysex(0x6F,i,MaxReadingSensor[i],0);
-    MaxReadingSensor[i] = -1;
+    simpleSysex(0x6F,i,Pin[i].MaxReading,0);
+    Pin[i].MaxReading = -1;
     return;
   }
   //===============================
   //        Piezo, HH
   //===============================
-  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ StateSensor[i]==PIEZO_TIME)
+  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ Pin[i].State==Piezo_Time)
   {          
       //Piezo
-      if(/*DualSensor(i)!=127 &&*/ TypeSensor[i]==PIEZO)
+      if(/*DualSensor(i)!=127 &&*/ Pin[i].Type==Piezo)
       {
-        simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+        simpleSysex(0x6F,i,UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm),0);
         
-        StateSensor[i]=MASK_TIME;
+        Pin[i].State=Mask_Time;
               
         //Piezo-Switch
-        if(TypeSensor[DualSensor(i)]==SWITCH && StateSensor[DualSensor(i)]==SWITCH_TIME )
+        if(Pin[DualSensor(i)].Type==Switch && Pin[DualSensor(i)].State==Switch_Time )
         {
               simpleSysex(0x6F,DualSensor(i),127,0);
 
-              StateSensor[DualSensor(i)]=MASK_TIME;
-              MaxReadingSensor[DualSensor(i)] = -1;
+              Pin[DualSensor(i)].State=Mask_Time;
+              Pin[DualSensor(i)].MaxReading = -1;
          }
       }
       else //HH========================================
-        simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
+        simpleSysex(0x6F,i,UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm),0);
                
-    MaxReadingSensor[i] = -1;
+    Pin[i].MaxReading = -1;
   }
-  /*
-  if ((Time-TimeSensor[i]) >= ScanTimeSensor[i] )
-  {         
-    //if (MaxReadingSensor[i] > ThresoldSensor[i])
-    {
-      //Dual
-      if(TypeSensor[i]==PIEZO)
-      {
-        //Piezo-Piezo
-        if(TypeSensor[DualSensor(i)]==PIEZO) //Piezo-Piezo
-        {
-          //DUAL
-          if(MaxReadingSensor[DualSensor(i)]>MaxReadingSensor[i])
-          {
-            MaxReadingSensor[i]=-1;
-            return;
-          }
-          else
-          {
-            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-            MaxReadingSensor[DualSensor(i)]=-1;  //Dual XTalk
-          }
-        }
-        else if(TypeSensor[DualSensor(i)]==SWITCH)//Piezo-Switch
-        {
-          //Se lo switch è stato attivato questo viene inibito altrimenti suona come un piezo normale
-          if(MaxReadingSensor[DualSensor(i)]<0)
-          {
-            simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-            //simpleSysex(0x6F,DualSensor(i),ZeroCountSensor[DualSensor(i)],0);
-            MaxReadingSensor[i] = -1;
-            
-            //STOP SWITCH
-            MaxReadingSensor[DualSensor(i)]=-1;
-            StateSensor[DualSensor(i)]=0;
-          } 
-          else
-           {
-             simpleSysex(0x6F,DualSensor(i),UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-             
-             MaxReadingSensor[i] = -1;
-             //Lo mettiamo in mask
-             TimeSensor[i]=Time-ScanTimeSensor[i];
-            
-            //STOP SWITCH
-            MaxReadingSensor[DualSensor(i)]=-1;
-            StateSensor[DualSensor(i)]=NORMAL_TIME;
-           }   
-          return;
-        }
-        else
-          simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-      }
-      else //Mono========================================
-      {
-        simpleSysex(0x6F,i,UseCurve(CurveSensor[i],MaxReadingSensor[i],CurveFormSensor[i]),0);
-      }//Mono=======================
-    }//Thresold
-   
-    MaxReadingSensor[i] = -1;
-  }//ScanTime*/
 }
 
 //==============================

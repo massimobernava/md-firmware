@@ -7,7 +7,7 @@ void setup()
   pinMode(3, OUTPUT);    // s1
   pinMode(4, OUTPUT);    // s2
 
-  Time=TIMEFUNCTION;
+  GlobalTime=TIMEFUNCTION;
   for (int count=0; count<NPin; count++)
   {
     Pin[count].set(count);

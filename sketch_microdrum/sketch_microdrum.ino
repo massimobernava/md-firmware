@@ -1,13 +1,13 @@
 
-//=====================================================================================
-//=>            microDRUM firmware v1.4.0
-//=>              www.microdrum.net
-//=>               CC BY-NC-SA 3.0
-//=>
-//=> Massimo Bernava
-//=> massimo.bernava@gmail.com
-//=> 2015-12-27
-//=====================================================================================
+//==============================================================================
+//=>                microDRUM/nanoDRUM firmware v1.4.0                        <= 
+//=>                        www.microdrum.net                                 <=
+//=>                         CC BY-NC-SA 3.0                                  <=
+//=>                                                                          <=
+//=> Massimo Bernava                                                          <=
+//=> massimo.bernava@gmail.com                                                <=
+//=> 2015-12-27                                                               <=
+//==============================================================================
 
 //========CONFIGURE=============
 #define USE_LCD           1     // Use LCD
@@ -67,11 +67,6 @@
   #define fastMidiCC(_channel,_number,_value) { Serial.write((0xB0 | 0x09)); Serial.write(_number); Serial.write(_value); }
 #endif
 
-#define DualSensor(i) (_DualSensor[(i)&0x07]+((i)&0xF8))
-//127=Disabled
-const byte _DualSensor[]    = {3,2,1,0,6,7,4,5};
-
-
 //===========MODE============
 enum mode:byte
 {
@@ -84,7 +79,7 @@ enum mode:byte
 
 //===GLOBAL========================
 mode Mode=Off;
-unsigned long Time;
+unsigned long GlobalTime;
 //=================================
 
 //===SETTING================
@@ -109,7 +104,7 @@ byte HHFootThresoldSensor[] = {127,127};
 //===Xtalk===================
 const byte NXtalkGroup=4;//Max number XTalk groups
 int MaxXtalkGroup[NXtalkGroup] = {-1};
-int MaxMultiplexerXtalk[NXtalkGroup]={-1};
+int MaxMultiplexerXtalk[8]={-1};
 //===========================
 
 

@@ -1,7 +1,6 @@
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//==============================
 //     LOOP
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//==============================
 void loop()
 {
   //simpleSysex(0xFF,Mode,0x00,0x00);
@@ -10,13 +9,11 @@ void loop()
   Menu();
   #endif
   
-
   if(Mode==Off)
   {
     delay(100);
     return;
   }
-
 
   //==========UNROLLING======
   //{0, 1, 3, 2, 6, 7, 5, 4}
@@ -25,42 +22,42 @@ void loop()
   //0
   fastWrite(2,0);/*fastWrite(3,0);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,0); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,0); }
   
   //1
   /*fastWrite(2,0);fastWrite(3,0);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,1); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,1); }
 
   //3
   /*fastWrite(2,0);*/fastWrite(3,1);/*fastWrite(4,1);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,3); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,3); }
   
   //2
   /*fastWrite(2,0);fastWrite(3,1);*/fastWrite(4,0);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,2); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,2); }
 
   //6
   fastWrite(2,1);/*fastWrite(3,1);fastWrite(4,0);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,6); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,6); }
   
   //7
   /*fastWrite(2,1);fastWrite(3,1);*/fastWrite(4,1);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,7); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,7); }
   
   //5
   /*fastWrite(2,1);*/fastWrite(3,0);/*fastWrite(4,1);*/
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,5); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,5); }
   
   //4
   /*fastWrite(2,1);fastWrite(3,0);*/fastWrite(4,0);
   delayMicroseconds(delayTime);
-  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastCheckMulti(Sensor,4); }
+  for(byte Sensor=0;Sensor<NSensor;Sensor++){ analogRead(Sensor); fastScan(Sensor,4); }
 
   //===============================
   if (Mode==Standby) return;
@@ -120,7 +117,26 @@ void loop()
   }
   //RESET XTALK
   for(int i=0;i<8;i++)
-    MaxMultiplexerXtalk[i]=MaxXtalkGroup[i]=-1;
+    MaxMultiplexerXtalk[i]=-1;
+  for(int i=0;i<NXtalkGroup;i++)
+    MaxXtalkGroup[i]=-1;
+}
+
+//==============================
+//    FASTSCAN
+//==============================
+
+inline void fastScan(byte sensor,byte count)
+{
+  byte pin=count+(sensor<<3);
+  if(Pin[pin].Type!=Disabled) 
+  {
+    Pin[pin].scan(sensor,count); 
+    if(Pin[pin].State==Scan_Time) 
+    { 
+      Pin[pin].scan(sensor,count); Pin[pin].scan(sensor,count); Pin[pin].scan(sensor,count);
+    }
+  }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -173,7 +189,7 @@ void PlaySensorMIDIMode(byte i)
   }
   //===============================
   
-  Time=TIMEFUNCTION;
+  GlobalTime=TIMEFUNCTION;
   
   //===============================
   //          YSwitch
@@ -190,7 +206,7 @@ void PlaySensorMIDIMode(byte i)
     if(DualSensor(i)!=127)//Dual
     {
       Pin[DualSensor(i)].MaxReading=-1;
-      Pin[DualSensor(i)].Time=Time-Pin[DualSensor(i)].ScanTime;
+      Pin[DualSensor(i)].Time=GlobalTime-Pin[DualSensor(i)].ScanTime;
     }
     
     Pin[i].MaxReading = -1;
@@ -260,29 +276,91 @@ void PlaySensorMIDIMode(byte i)
   }
 }
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//    FASTCHECKMULTI
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-inline void fastCheckMulti(byte n1,byte n2)
+//==============================
+//    PLAYSENSOR TOOLMODE
+//==============================
+void PlaySensorTOOLMode(byte i)
 {
-  if(Pin[n2+(n1<<3)].Type!=Disabled) 
+  //===============================
+  //        Switch
+  //===============================
+  /*if(TypeSensor[i]==1)
   {
-    CheckMulti(n1,n2); 
-    if(Pin[n2+(n1<<3)].State==Scan_Time) 
-    { 
-      CheckMulti(n1,n2); CheckMulti(n1,n2); CheckMulti(n1,n2);
+    simpleSysex(0x6F,i,MaxReadingSensor[i],0);
+    MaxReadingSensor[i] = -1;
+    return;
+  }*/
+  if(Pin[i].Type==Switch)
+  { 
+    simpleSysex(0x6F,i,Pin[i].MaxReading,0);
+    
+    if(Pin[i].State==Switch_Time)
+    {   
+      Pin[i].State=Mask_Time;
+      Pin[i].MaxReading = -1;
     }
+    return;
+  }
+  //===============================
+  //          YSwitch
+  //===============================
+  if(Pin[i].Type==YSwitch)
+  {
+    simpleSysex(0x6F,i,Pin[i].MaxReading,0);
+    Pin[i].MaxReading = -1;
+    return;
+  }
+  //===============================
+  //        Piezo, HH
+  //===============================
+  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ Pin[i].State==Piezo_Time)
+  {          
+      //Piezo
+      if(/*DualSensor(i)!=127 &&*/ Pin[i].Type==Piezo)
+      {
+        simpleSysex(0x6F,i,UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm),0);
+        
+        Pin[i].State=Mask_Time;
+              
+        //Piezo-Switch
+        if(Pin[DualSensor(i)].Type==Switch && Pin[DualSensor(i)].State==Switch_Time )
+        {
+              simpleSysex(0x6F,DualSensor(i),127,0);
+
+              Pin[DualSensor(i)].State=Mask_Time;
+              Pin[DualSensor(i)].MaxReading = -1;
+         }
+      }
+      else //HH========================================
+        simpleSysex(0x6F,i,UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm),0);
+               
+    Pin[i].MaxReading = -1;
   }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//    FASTCHECKMULTI
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+/*inline void fastCheckMulti(byte sensor,byte count)
+{
+  if(Pin[count+(sensor<<3)].Type!=Disabled) 
+  {
+    CheckMulti(sensor,count); 
+    if(Pin[count+(sensor<<3)].State==Scan_Time) 
+    { 
+      CheckMulti(sensor,count); CheckMulti(sensor,count); CheckMulti(sensor,count);
+    }
+  }
+}*/
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    CHECKMULTI
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-void CheckMulti(byte Sensor,byte count)
+/*void CheckMulti(byte Sensor,byte count)
 {
   byte MulSensor=count+(Sensor<<3);
-  //if(TypeSensor[MulSensor]==127/*Disabled*/) return;
+  //if(TypeSensor[MulSensor]==127) return;
 
   //Time=TIMEFUNCTION;
   //int sensorReading = analogRead(Sensor); 
@@ -373,14 +451,14 @@ void CheckMulti(byte Sensor,byte count)
   //===============================
   else
   {
-    Time=TIMEFUNCTION;
+    GlobalTime=TIMEFUNCTION;
     
     if(Pin[MulSensor].State==Mask_Time)  
     { 
-      if ((Time-Pin[MulSensor].Time)>Pin[MulSensor].MaskTime)
+      if ((GlobalTime-Pin[MulSensor].Time)>Pin[MulSensor].MaskTime)
       {
         Pin[MulSensor].State = Retrigger_Time;
-        Pin[MulSensor].Time = Time;
+        Pin[MulSensor].Time = GlobalTime;
       }
     }
     
@@ -389,13 +467,13 @@ void CheckMulti(byte Sensor,byte count)
         
     if(Pin[MulSensor].State==Retrigger_Time)
     {
-      int MaxRetriggerSensor=Pin[MulSensor].MaxReading-((Time-Pin[MulSensor].Time)*(Pin[MulSensor].Retrigger+1)/16);
+      int MaxRetriggerSensor=Pin[MulSensor].MaxReading-((GlobalTime-Pin[MulSensor].Time)*(Pin[MulSensor].Retrigger+1)/16);
       if(MaxRetriggerSensor>0)
       {
           if((yn_0 - Pin[MulSensor].yn_1)> Pin[MulSensor].Thresold && yn_0 > MaxRetriggerSensor)
           {
             Pin[MulSensor].State = Scan_Time;
-            Pin[MulSensor].Time = Time;
+            Pin[MulSensor].Time = GlobalTime;
             Pin[MulSensor].MaxReading = 0;
           }
       }
@@ -407,13 +485,13 @@ void CheckMulti(byte Sensor,byte count)
       if((yn_0 - Pin[MulSensor].yn_1)> Pin[MulSensor].Thresold) 
       {
         Pin[MulSensor].State = Scan_Time;
-        Pin[MulSensor].Time = Time;
+        Pin[MulSensor].Time = GlobalTime;
         Pin[MulSensor].MaxReading = 0;
       }
     }
     else if(Pin[MulSensor].State==Scan_Time) 
     {
-      if ((Time-Pin[MulSensor].Time) < Pin[MulSensor].ScanTime)
+      if ((GlobalTime-Pin[MulSensor].Time) < Pin[MulSensor].ScanTime)
       {
         if(yn_0 > Pin[MulSensor].MaxReading)
         {
@@ -440,16 +518,16 @@ void CheckMulti(byte Sensor,byte count)
   Pin[MulSensor].yn_1=yn_0;
 
 }
-
+*/
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    CHECKHHCONTROL
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-void CheckHHControl(byte HHControl,byte sensorReading)
+/*void CheckHHControl(byte HHControl,byte sensorReading)
 {
-  if ((Time-Pin[HHControl].Time) > Pin[HHControl].MaskTime)
+  if ((GlobalTime-Pin[HHControl].Time) > Pin[HHControl].MaskTime)
   {
-    if(sensorReading>(/*yn_1*/Pin[HHControl].MaxReading+Pin[HHControl].Thresold) || sensorReading<(/*yn_1*/Pin[HHControl].MaxReading-Pin[HHControl].Thresold))
+    if(sensorReading>(Pin[HHControl].MaxReading+Pin[HHControl].Thresold) || sensorReading<(Pin[HHControl].MaxReading-Pin[HHControl].Thresold))
     {
       if (Mode==MIDI)
       {
@@ -462,7 +540,7 @@ void CheckHHControl(byte HHControl,byte sensorReading)
       else if(Mode==Tool && Diagnostic==true)
         simpleSysex(0x6F,HHControl,sensorReading,0);
         
-      float m=(((float)Pin[HHControl].MaxReading-(float)sensorReading)/((float)Pin[HHControl].Time-(float)Time))*100;
+      float m=(((float)Pin[HHControl].MaxReading-(float)sensorReading)/((float)Pin[HHControl].Time-(float)GlobalTime))*100;
 
       Pin[HHControl].MaxReading=sensorReading;//LastReading
         
@@ -474,11 +552,11 @@ void CheckHHControl(byte HHControl,byte sensorReading)
       else if(m<0 && -m>HHFootThresoldSensor[1])
         Pin[HHControl].State=Footclose_Time;
 
-      Pin[HHControl].Time=Time;
+      Pin[HHControl].Time=GlobalTime;
     }
   }
 }
-
+*/
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    USECURVE
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -519,6 +597,194 @@ byte UseCurve(byte Curve,int Value,byte Form)
   return ret;
 }
 
+
+//==============================
+//    LOGTOOL
+//==============================
+void LogTool(int yn_0,byte MulSensor)
+{
+   #if MENU_LOG
+   //FASE 1: autodeterminazione del rumore massimo Nmax in un intervallo fisso di 20s
+    if(log_state==0)//FASE 1: AVVIO
+    {
+      log_T1=TIMEFUNCTION;
+      log_Nmax=yn_0;
+      log_state=1;
+      
+      //ChokeNoteSensor[MulSensor]=64; //GAIN=64 attenzione pialla tutto
+      //CurveFormSensor[MulSensor]=64;
+      //CurveSensor[MulSensor]=0;
+       
+      d_hsum=0;
+      d_tsum=0;
+      d_tnum=0;
+      d_rmin=127;
+      d_vmax=0;
+      d_vmin=1024;
+      d_vmean=0;
+      
+      N=0;
+      
+      //WAIT
+      DrawLog(0);
+
+    }
+    else if(log_state==1)//FASE 1: ANALISI
+    {
+      if(yn_0>log_Nmax) log_Nmax=yn_0;
+      if((log_T1+20000)<TIMEFUNCTION) //20sec
+      {
+        log_state=2;
+      
+        if(d_tnum<25) DrawLog(1); //25 hit
+        else DrawLog(2);
+     }
+    }
+    else if(log_state==2) //FASE 1: FINE
+    {
+      //DrawLog(0);
+      
+      //FASE 2: analisi del segnale per 1s
+      if(yn_0>log_Nmax)
+      {
+        //Wait
+        DrawLog(0);
+        N++;
+        log_Tmax=log_T1=TIMEFUNCTION; //FASE 2: INIZIO
+        log_state=3;
+        log_Vmax=yn_0;
+        //log_note=0;
+      }
+    }
+    else if(log_state==3)
+    {
+      //if(log_oldState==0 && StateSensor[MulSensor]==SCAN_TIME) log_note++; //Numero di Scan
+      //log_oldState=StateSensor[MulSensor];
+    
+      if(yn_0>log_Nmax)
+      {
+        //DrawLog(0);
+        N++;
+        //log_T2=TIMEFUNCTION; //Dopo quanto tempo scende sotto la soglia
+        if(yn_0>log_Vmax)
+        {
+          log_Vmax=yn_0;
+          log_Tmax=TIMEFUNCTION;
+
+          /*log_T80=0;
+          log_T70=0;
+          log_T60=0;*/
+          log_T50=0;
+          /*log_T40=0;
+          log_T30=0;
+          log_T20=0;*/
+        }
+        else
+        {
+          /*if(yn_0>(int)((float)log_Vmax*0.8))
+            log_T80=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.7))
+            log_T70=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.6))
+            log_T60=log_T2;
+          else */
+          if(yn_0>(int)((float)log_Vmax*0.5))
+            log_T50=TIMEFUNCTION;
+          /*else if(yn_0>(int)((float)log_Vmax*0.4))
+            log_T40=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.3))
+            log_T30=log_T2;
+          else if(yn_0>(int)((float)log_Vmax*0.2))
+            log_T20=log_T2;*/
+          }
+      }
+      
+      //1 sec
+      if((TIMEFUNCTION-log_T1) > 1000)//FASE 2: FINE
+      {
+        log_state=4;
+        //N=0;
+        
+        //if((log_Tmax-log_T1) > d_tmax) d_tmax=(log_Tmax-log_T1);
+        d_hsum+=(log_T50==0?0:log_T50-log_Tmax);
+        d_tsum+=(log_Tmax-log_T1);
+        d_hsum2+=(log_T50==0?0:log_T50-log_Tmax)*(log_T50==0?0:log_T50-log_Tmax);
+        d_tsum2+=(log_Tmax-log_T1)*(log_Tmax-log_T1);
+        d_tnum++;
+        
+        if(((log_Vmax-log_Nmax)/N)<d_rmin) d_rmin=((log_Vmax-log_Nmax)/N);
+        if(log_Vmax>d_vmax) d_vmax=log_Vmax;
+        if(log_Vmax<d_vmin) d_vmin=log_Vmax;
+        d_vmean+=log_Vmax;
+        
+        if(d_tnum<25) DrawLog(1);
+        else if(d_tnum<50) DrawLog(2);
+        
+      }
+    }
+    else if(log_state==4) //FASE 3: report
+    {
+      /*if(log_Show==0) DrawLog(0);
+      else if(log_Show==4000) DrawLog(1);
+      else if(log_Show==8000) DrawLog(2);
+      //else if(log_Show==12000) DrawLog(3);
+    
+      log_Show++;
+      if(log_Show==12000) log_Show=0;*/
+      
+      if(d_tnum==25)
+      {
+        Pin[MulSensor].Gain=(40.0/(float)(d_vmean/25))*64.0;
+        if (Pin[MulSensor].Gain <16) Pin[MulSensor].Gain=16;
+        
+        log_T1=TIMEFUNCTION;
+        log_Nmax=0;
+        log_state=1;
+      
+        d_hsum=0;
+        d_tsum=0;
+      
+        d_hsum2=0;
+        d_tsum2=0;
+        
+        d_rmin=127;
+        d_vmax=0;
+      
+        N=0;
+      
+        //WAIT
+        DrawLog(0);
+      }
+      else if(d_tnum==50)
+     {
+       Pin[MulSensor].Thresold=log_Nmax;
+       Pin[MulSensor].ScanTime=(d_tsum/25)+(sqrt((25*d_tsum2)-(d_tsum*d_tsum))/25);
+       Pin[MulSensor].MaskTime=(d_hsum/25)+(sqrt((25*d_hsum2)-(d_hsum*d_hsum))/25);
+       Pin[MulSensor].Retrigger=d_rmin;
+       Pin[MulSensor].CurveForm=(1024/d_vmax)*32;
+       Pin[MulSensor].Curve=Linear;
+       
+       DrawLog(3);
+       log_state=5; //END
+     }
+     else if(yn_0>log_Nmax) //FASE 2: INIZIO
+      {
+        log_Tmax=log_T1=TIMEFUNCTION;
+        log_state=3;
+        log_Vmax=yn_0;
+        //log_note=0;
+
+         N=0;
+         
+         DrawLog(0);
+      }
+    }
+  #else
+    N++;
+    if(yn_0>=(LogThresold*2))
+    SendLog(MulSensor,N,yn_0,UseCurve(Pin[MulSensor].Curve,Pin[MulSensor].MaxReading,Pin[MulSensor].CurveForm),Pin[MulSensor].MaxReading,Pin[MulSensor].State);
+  #endif  
+}
 
 
 

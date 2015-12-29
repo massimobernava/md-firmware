@@ -66,7 +66,9 @@ void loop()
   //Time=TIMEFUNCTION;
   for(byte i=0;i<(NSensor*8);i++)
   {
-    byte TS=Pin[i].Type;
+    Pin[i].play(i,&Pin[DualSensor(i)]);
+    
+    /*byte TS=Pin[i].Type;
     //===============================
     //        Disabled, HHC
     //===============================
@@ -113,10 +115,10 @@ void loop()
       }  
       PlaySensorMIDIMode(i);
 
-    }
+    }*/
   }
   //RESET XTALK
-  for(int i=0;i<8;i++)
+  for(int i=0;i<NSensor;i++)
     MaxMultiplexerXtalk[i]=-1;
   for(int i=0;i<NXtalkGroup;i++)
     MaxXtalkGroup[i]=-1;
@@ -142,27 +144,13 @@ inline void fastScan(byte sensor,byte count)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    PLAYSENSOR MIDIMODE
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-void PlaySensorMIDIMode(byte i)
+/*void PlaySensorMIDIMode(byte i)
 {
   //===============================
   //        Single Switch
   //===============================
   if(Pin[i].Type==Switch)
   { 
-    /*if(TypeSensor[DualSensor(i)]==SWITCH) //Switch-Switch
-    { 
-      fastNoteOn(ChannelSensor[i],NoteSensor[i],MaxReadingSensor[i]/8);
-    
-      #if WAVTRIGGER
-      wavTrigger(i,MaxReadingSensor[i]/8);
-      #endif
-            
-      MaxReadingSensor[i] = -1;
-    }
-    else if(TypeSensor[DualSensor(i)]==Disabled) //Switch-Disabled
-    {
-      
-    }*/
     if(Pin[i].State==Switch_Time)
     {
       fastNoteOn(Pin[i].Channel,Pin[i].Note,127);//MaxReadingSensor[i]*18);
@@ -215,10 +203,10 @@ void PlaySensorMIDIMode(byte i)
   //===============================
   
   //====================================================================
-  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ Pin[i].State==Piezo_Time)
+  if ( Pin[i].State==Piezo_Time)
   {          
       //Piezo
-      if(/*DualSensor(i)!=127 &&*/ Pin[i].Type==Piezo)
+      if(Pin[i].Type==Piezo)
       {
         byte v=UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm);
           
@@ -241,18 +229,6 @@ void PlaySensorMIDIMode(byte i)
             
               Pin[DualSensor(i)].State=Mask_Time;
          }
-         /*
-         else if(TypeSensor[DualSensor(i)]==PIEZO && MaxReadingSensor[DualSensor(i)]> ThresoldSensor[DualSensor(i)]) //Piezo-Piezo
-        {
-            byte v=UseCurve(CurveSensor[DualSensor(i)],MaxReadingSensor[DualSensor(i)],CurveFormSensor[DualSensor(i)]);
-            #if WAVTRIGGER
-             wavTrigger(DualSensor(i),v);
-            #endif
-            fastNoteOn(ChannelSensor[DualSensor(i)],NoteSensor[DualSensor(i)],v);
-            
-            MaxReadingSensor[DualSensor(i)]=-1;  //Dual XTalk
-          
-        }*/
       }
       else //HH========================================
       {
@@ -274,22 +250,16 @@ void PlaySensorMIDIMode(byte i)
         fastNoteOn(Pin[i].Channel,Note,UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm));
       }//HH=======================
   }
-}
+}*/
 
 //==============================
 //    PLAYSENSOR TOOLMODE
 //==============================
-void PlaySensorTOOLMode(byte i)
+/*void PlaySensorTOOLMode(byte i)
 {
   //===============================
   //        Switch
   //===============================
-  /*if(TypeSensor[i]==1)
-  {
-    simpleSysex(0x6F,i,MaxReadingSensor[i],0);
-    MaxReadingSensor[i] = -1;
-    return;
-  }*/
   if(Pin[i].Type==Switch)
   { 
     simpleSysex(0x6F,i,Pin[i].MaxReading,0);
@@ -313,10 +283,10 @@ void PlaySensorTOOLMode(byte i)
   //===============================
   //        Piezo, HH
   //===============================
-  if (/*(Time-TimeSensor[i]) >= ScanTimeSensor[i]*/ Pin[i].State==Piezo_Time)
+  if (Pin[i].State==Piezo_Time)
   {          
       //Piezo
-      if(/*DualSensor(i)!=127 &&*/ Pin[i].Type==Piezo)
+      if( Pin[i].Type==Piezo)
       {
         simpleSysex(0x6F,i,UseCurve(Pin[i].Curve,Pin[i].MaxReading,Pin[i].CurveForm),0);
         
@@ -337,7 +307,7 @@ void PlaySensorTOOLMode(byte i)
     Pin[i].MaxReading = -1;
   }
 }
-
+*/
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //    FASTCHECKMULTI
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -561,12 +531,12 @@ void PlaySensorTOOLMode(byte i)
 //    USECURVE
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //const float X[9]={0, 128, 256, 384, 512, 640, 768, 896, 1024};
-const float _Exp[9]={2.33, 3.85, 6.35, 10.48, 17.28, 28.5, 46.99 , 77.47, 127.74}; //e^((x/256)+0,85)
-const float _Log[9]={0, 83.67, 98.23, 106.74, 112.78, 117.47, 121.30 , 124.53, 127.34}; //21*ln(0,42*x)
-const float _Sigma[9]={2.28, 6.02, 15.13, 34.15, 63.5, 92.84, 111.86 , 120.97, 127.71}; //128/(1+e^((512-x)/128))
-const float _Flat[9]={0, 32.86, 46.42, 55.82, 64.0, 72.17, 81.57 , 95.13, 127}; //64-16*ln((1024/x)-1)
+//const float _Exp[9]={2.33, 3.85, 6.35, 10.48, 17.28, 28.5, 46.99 , 77.47, 127.74}; //e^((x/256)+0,85)
+//const float _Log[9]={0, 83.67, 98.23, 106.74, 112.78, 117.47, 121.30 , 124.53, 127.34}; //21*ln(0,42*x)
+//const float _Sigma[9]={2.28, 6.02, 15.13, 34.15, 63.5, 92.84, 111.86 , 120.97, 127.71}; //128/(1+e^((512-x)/128))
+//const float _Flat[9]={0, 32.86, 46.42, 55.82, 64.0, 72.17, 81.57 , 95.13, 127}; //64-16*ln((1024/x)-1)
 
-byte UseCurve(byte Curve,int Value,byte Form)
+/*byte UseCurve(byte Curve,int Value,byte Form)
 {
   int ret=0;
   //float Xn=(float)Value;
@@ -595,7 +565,7 @@ byte UseCurve(byte Curve,int Value,byte Form)
   if(ret<=0) return 0;
   if(ret>=127) return 127;//127
   return ret;
-}
+}*/
 
 
 //==============================

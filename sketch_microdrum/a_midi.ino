@@ -2,32 +2,21 @@
 //    MIDI
 //==============================
 void noteOn(byte channel, byte note, byte velocity) {
-
-    //OTTIMIZZA
-   // fastWrite(ledPin,HIGH);
-    Serial.write(0x90 | channel);//Ottimizzazione
+    Serial.write(0x90 | channel);
     Serial.write(note);
     Serial.write(velocity);
-    //digitalWrite(ledPin,LOW);
-    //fastWrite(ledPin,LOW);
-
 }
 
 void noteOff(byte channel, byte note, byte velocity) {
-  midiMsg( (0x80 | channel), note, velocity);
+    Serial.write(0x80 | channel);
+    Serial.write(note);
+    Serial.write(velocity);
 }
 
 void midiCC(byte channel, byte number, byte value) {
-  //midiMsg( (0xB0 | channel), number, value);
     Serial.write((0xB0 | channel));//Ottimizzazione
     Serial.write(number);
     Serial.write(value);
-}
-
-void midiMsg(byte cmd, byte data1, byte data2) {
-  Serial.write(cmd);
-  Serial.write(data1);
-  Serial.write(data2);
 }
 //=============SYSEX=========
 void simpleSysex(byte cmd,byte data1,byte data2,byte data3)

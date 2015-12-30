@@ -1,4 +1,9 @@
 //==============================
+//    FASTSCAN
+//==============================
+#define fastScan(sensor,count) { byte pin=count+(sensor<<3); if(Pin[pin].Type!=Disabled) { Pin[pin].scan(sensor,count); if(Pin[pin].State==Scan_Time) { Pin[pin].scan(sensor,count); Pin[pin].scan(sensor,count); Pin[pin].scan(sensor,count);}}}
+
+//==============================
 //     LOOP
 //==============================
 void loop()
@@ -122,23 +127,6 @@ void loop()
     MaxMultiplexerXtalk[i]=-1;
   for(int i=0;i<NXtalkGroup;i++)
     MaxXtalkGroup[i]=-1;
-}
-
-//==============================
-//    FASTSCAN
-//==============================
-
-inline void fastScan(byte sensor,byte count)
-{
-  byte pin=count+(sensor<<3);
-  if(Pin[pin].Type!=Disabled) 
-  {
-    Pin[pin].scan(sensor,count); 
-    if(Pin[pin].State==Scan_Time) 
-    { 
-      Pin[pin].scan(sensor,count); Pin[pin].scan(sensor,count); Pin[pin].scan(sensor,count);
-    }
-  }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -752,7 +740,7 @@ void LogTool(int yn_0,byte MulSensor)
   #else
     N++;
     if(yn_0>=(LogThresold*2))
-    SendLog(MulSensor,N,yn_0,UseCurve(Pin[MulSensor].Curve,Pin[MulSensor].MaxReading,Pin[MulSensor].CurveForm),Pin[MulSensor].MaxReading,Pin[MulSensor].State);
+    SendLog(MulSensor,N,yn_0,Pin[MulSensor].useCurve(),Pin[MulSensor].MaxReading,Pin[MulSensor].State);
   #endif  
 }
 

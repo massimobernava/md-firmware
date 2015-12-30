@@ -19,7 +19,7 @@
 #define USE_WAVTRIGGER    1     // Use WavTrigger
 #define WT_16             1     // WT_16 = 16 Wav Trigger Input , WT_24 = 24 Wav Trigger Input
 #define ENABLE_CHANNEL    0     // Enable MIDI Channel
-#define MENU_LOG          1     // Enable Auto Tune (only with USE_LCD)
+#define MENU_LOG          1     // Enable Auto Tune (only with LCD)
 #define NANO              1     // 1 = nanoDrum , 0 = microDrum
 //==============================
 

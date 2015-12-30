@@ -164,18 +164,20 @@ class pin
   void scan(byte sensor,byte count)
   {
     byte pin = count+(sensor<<3);
-    int yn_0 = analogRead(sensor);
+    int yn_0 = -1;
     
     //===============================
     //        HHC
     //===============================
-    if(Type==HHC) { scanHHC(pin,yn_0/8); return; }
+    if(Type==HHC) { scanHHC(pin,analogRead(sensor)/8); return; }
     
     //===============================
     //        Switch
     //===============================
     if(Type==Switch)
     {
+      yn_0 = analogRead(sensor);
+      
       //DrawDiagnostic(MulSensor,yn_0/8);
       if(State==Normal_Time) 
       {
@@ -216,6 +218,8 @@ class pin
     //===============================
     else if(Type==YSwitch)
     {
+      yn_0 = analogRead(sensor);
+      
       if(yn_0<Thresold*4 )
       {
         State=Scan_Time;
@@ -250,7 +254,7 @@ class pin
         }
       }
     
-      yn_0 = 0.5 + ((float)yn_0*(float)Gain)/64.0;
+      yn_0 = 0.5 + ((float)analogRead(sensor)*(float)Gain)/64.0;
     
         
       if(State==Retrigger_Time)
@@ -386,7 +390,7 @@ class pin
       //Piezo
       if(Type==Piezo)
       {
-        simpleSysex(0x6F,i,useCurve(Curve,MaxReading,CurveForm),0);
+        simpleSysex(0x6F,i,useCurve(),0);
         
         State=Mask_Time;
               
@@ -400,7 +404,7 @@ class pin
          }
       }
       else //HH========================================
-        simpleSysex(0x6F,i,useCurve(Curve,MaxReading,CurveForm),0);
+        simpleSysex(0x6F,i,useCurve(),0);
                
       MaxReading = -1;
     }
@@ -484,7 +488,7 @@ class pin
       //Piezo
       if(Type==Piezo)
       {
-        byte v=useCurve(Curve,MaxReading,CurveForm);
+        byte v=useCurve();
           
         #if USE_WAVTRIGGER
         wavTrigger(i,v);
@@ -534,7 +538,7 @@ class pin
         else if(dual->MaxReading>HHThresoldSensor[0])
           note=HHNoteSensor[0];
 
-        fastNoteOn(Channel,note,useCurve(Curve,MaxReading,CurveForm));
+        fastNoteOn(Channel,note,useCurve());
       }//HH=======================
     }
   }
@@ -567,22 +571,20 @@ class pin
   int MaxReading;
   int yn_1;
 
-  private:
-
-  byte useCurve(byte Curve,int Value,byte Form)
+  byte useCurve()
   {
     int ret=0;
     //float Xn=(float)Value;
-    float f=((float)Form)/32.0;//[1;127]->[0.;4.0]
+    float f=((float)CurveForm)/32.0;//[1;127]->[0.;4.0]
     
     if(Curve==Linear)
     {
-      ret=0.5 + ((float)Value*f/8.0);
+      ret=0.5 + ((float)MaxReading*f/8.0);
     }
     else
     {
-      int i=Value/128;
-      int m=Value % 128;
+      int i=MaxReading/128;
+      int m=MaxReading % 128;
     
       switch(Curve)
       {

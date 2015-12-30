@@ -21,7 +21,8 @@ enum type:byte
   Switch   = 1,
   HHC      = 2,
   HH       = 3,
-  YSwitch  = 4,
+  HHs      = 4,
+  YSwitch  = 5,
   Disabled = 15
 };
 //============================
@@ -64,7 +65,18 @@ const byte DP_HHBOW     = 0x03;
 const byte DP_HHEDGE    = 0x00;
 const byte DP_HHC       = 0x01;
 const byte DP_HHC_RING  = 0x02;
-
+/*
+#if WT_16
+#define WTP_RIDEBOW 0x0C
+#define WTP_RIDEEDGE 0x0E
+#define WTP_TOM1HEAD 0x0F
+#define WTP_TOM2HEAD 0x0D
+#define WTP_TOM3HEAD 0x0B
+#define WTP_TOM4HEAD 0x08
+#define WTP_CRASHBOW 0x09
+#define WTP_CRASHEDGE 0x0A
+#endif
+*/
 const byte DP_RIDEBOW   = 0x0C;
 const byte DP_RIDEEDGE  = 0x0E;
 const byte DP_TOM1HEAD  = 0x0F;
@@ -103,7 +115,7 @@ class pin
     #endif
     Thresold=20;
     ScanTime=10;
-    MaskTime=50;
+    MaskTime=30;
     Retrigger=30;
 
     Curve=Linear;
@@ -319,7 +331,7 @@ class pin
       }
       return;
     }
-    
+   
     if(State==Normal_Time || State==Scan_Time || State==Mask_Time || State==Retrigger_Time) return;
 
     //=============XTALK==================
@@ -508,6 +520,7 @@ class pin
       }
       else //HH========================================
       {
+      	//??? dual != hhc
         byte note=Note;
         //if(ZeroCountSensor[HHC]>DualThresoldSensor[i])//DUAL
         if(dual->MaxReading>dual->Thresold)

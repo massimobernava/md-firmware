@@ -1,4 +1,4 @@
-
+ 
 //==============================================================================
 //=>                microDRUM/nanoDRUM firmware v1.4.0                        <= 
 //=>                        www.microdrum.net                                 <=
@@ -20,7 +20,7 @@
 #define WT_16             1     // WT_16 = 16 Wav Trigger Input , WT_24 = 24 Wav Trigger Input
 #define ENABLE_CHANNEL    0     // Enable MIDI Channel
 #define MENU_LOG          1     // Enable Auto Tune (only with USE_LCD)
-#define NANO              0     // 1 = nanoDrum , 0 = microDrum
+#define NANO              1     // 1 = nanoDrum , 0 = microDrum
 //==============================
 
 #if defined(__arm__) 

@@ -191,9 +191,9 @@ const byte dDELAY=2;
 
 const byte DEMO_LENGTH = 10;
 const byte demo_song[] PROGMEM={ dNOTEON,WTP_SNAREHEAD,120,
-                         dDELAY,500,
+                         dDELAY,255,
                          dNOTEON,WTP_KICK,120,
-                         dDELAY,500};
+                         dDELAY,255};
 void demo(byte repeat)
 {
   while(repeat--)

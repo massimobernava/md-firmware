@@ -3,6 +3,8 @@
 //==============================
 void setup()
 {
+  pinMode(13, OUTPUT);   //LED
+  
   pinMode(2, OUTPUT);    // s0
   pinMode(3, OUTPUT);    // s1
   pinMode(4, OUTPUT);    // s2
@@ -65,7 +67,7 @@ void setup()
     lcd.begin(16, 2);
     // Print a message to the LCD.
     #if NANO
-      MenuString(PSTR("nanoDRUM v1.0"),false);
+      MenuString(PSTR("nanoDRUM v1.4"),false);
     #else
       MenuString(PSTR("microDRUM v1.4"),false);
     #endif

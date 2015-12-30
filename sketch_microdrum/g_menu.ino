@@ -285,7 +285,7 @@ void Draw()
         #else
         MenuString(S_PIN,false);
         #endif
-        MenuString((eMenuPage-2),eMenuSelect==0);
+        MenuInt((eMenuPage-2),eMenuSelect==0);
 
       }
       else if (eMenuPage==50) {if(Mode==Tool) Diagnostic=true; else MenuString(S_LOGDIS,false);}//MenuString(S_LOG,eMenuSelect==0);
@@ -358,8 +358,8 @@ void Draw()
       lcd.setCursor(11,1);
       if(eMenuPage==1)
       {
-        if(eMenuGeneral==0) MenuString(delayTime,eMenuSelect==2);
-        else if(eMenuGeneral==1) MenuString(GeneralXtalk,eMenuSelect==2);
+        if(eMenuGeneral==0) MenuInt(delayTime,eMenuSelect==2);
+        else if(eMenuGeneral==1) MenuInt(GeneralXtalk,eMenuSelect==2);
         #if USE_WAVTRIGGER
         else if(eMenuGeneral==2) 
         {
@@ -370,18 +370,18 @@ void Draw()
           else if(kit==3) MenuString(S_SALAMANDER,eMenuSelect==2);
         }
         #endif
-        else if(eMenuGeneral==3) MenuString(HHThresoldSensor[0],eMenuSelect==2);
-        else if(eMenuGeneral==4) MenuString(HHThresoldSensor[1],eMenuSelect==2);
-        else if(eMenuGeneral==5) MenuString(HHThresoldSensor[2],eMenuSelect==2);
-        else if(eMenuGeneral==6) MenuString(HHThresoldSensor[3],eMenuSelect==2);
+        else if(eMenuGeneral==3) MenuInt(HHThresoldSensor[0],eMenuSelect==2);
+        else if(eMenuGeneral==4) MenuInt(HHThresoldSensor[1],eMenuSelect==2);
+        else if(eMenuGeneral==5) MenuInt(HHThresoldSensor[2],eMenuSelect==2);
+        else if(eMenuGeneral==6) MenuInt(HHThresoldSensor[3],eMenuSelect==2);
       }
       else if(eMenuPage>=2  && eMenuPage<50)
       {
-        if(eMenuPin==0) MenuString(Pin[eMenuPage-2].Note,eMenuSelect==2);
-        else if(eMenuPin==1) MenuString(Pin[eMenuPage-2].Thresold,eMenuSelect==2);
-        else if(eMenuPin==2) MenuString(Pin[eMenuPage-2].ScanTime,eMenuSelect==2);
-        else if(eMenuPin==3) MenuString(Pin[eMenuPage-2].MaskTime,eMenuSelect==2);
-        else if(eMenuPin==4) MenuString(Pin[eMenuPage-2].Retrigger,eMenuSelect==2);
+        if(eMenuPin==0) MenuInt(Pin[eMenuPage-2].Note,eMenuSelect==2);
+        else if(eMenuPin==1) MenuInt(Pin[eMenuPage-2].Thresold,eMenuSelect==2);
+        else if(eMenuPin==2) MenuInt(Pin[eMenuPage-2].ScanTime,eMenuSelect==2);
+        else if(eMenuPin==3) MenuInt(Pin[eMenuPage-2].MaskTime,eMenuSelect==2);
+        else if(eMenuPin==4) MenuInt(Pin[eMenuPage-2].Retrigger,eMenuSelect==2);
         else if(eMenuPin==5)
        {
          switch(Pin[eMenuPage-2].Curve)
@@ -391,29 +391,30 @@ void Draw()
            case 2: MenuString(S_LOG,eMenuSelect==2); break;
            case 3: MenuString(S_SGM,eMenuSelect==2); break;
            case 4: MenuString(S_FLT,eMenuSelect==2); break;
-           default: MenuString(Pin[eMenuPage-2].Curve,eMenuSelect==2);
+           default: MenuInt(Pin[eMenuPage-2].Curve,eMenuSelect==2);
          }
        }
-        else if(eMenuPin==6) MenuString(Pin[eMenuPage-2].CurveForm,eMenuSelect==2);
-        else if(eMenuPin==7) MenuString(Pin[eMenuPage-2].Xtalk,eMenuSelect==2);
-        else if(eMenuPin==8) MenuString(Pin[eMenuPage-2].XtalkGroup,eMenuSelect==2);
+        else if(eMenuPin==6) MenuInt(Pin[eMenuPage-2].CurveForm,eMenuSelect==2);
+        else if(eMenuPin==7) MenuInt(Pin[eMenuPage-2].Xtalk,eMenuSelect==2);
+        else if(eMenuPin==8) MenuInt(Pin[eMenuPage-2].XtalkGroup,eMenuSelect==2);
         else if(eMenuPin==9)
        {
+        lcd.setCursor(6,1);
          switch(Pin[eMenuPage-2].Type)
          {
-           case 0: MenuString(S_PIEZO,eMenuSelect==2); break;
-           case 1: MenuString(S_SWITCH,eMenuSelect==2); break;
-           case 2: MenuString(S_HHC,eMenuSelect==2); break;
-           case 3: MenuString(S_HH,eMenuSelect==2); break;
-           case 4: MenuString(S_HHS,eMenuSelect==2); break;
-           case 5: MenuString(S_YSWITCH,eMenuSelect==2); break;
-           case 127: MenuString(S_DISABLED,eMenuSelect==2); break;
+           case Piezo: MenuString(S_PIEZO,eMenuSelect==2); break;
+           case Switch: MenuString(S_SWITCH,eMenuSelect==2); break;
+           case HHC: MenuString(S_HHC,eMenuSelect==2); break;
+           case HH: MenuString(S_HH,eMenuSelect==2); break;
+           case HHs: MenuString(S_HHS,eMenuSelect==2); break;
+           case YSwitch: MenuString(S_YSWITCH,eMenuSelect==2); break;
+           case Disabled: MenuString(S_DISABLED,eMenuSelect==2); break;
          }
        }
-        else if(eMenuPin==10) MenuString(Pin[eMenuPage-2].ChokeNote,eMenuSelect==2);
-        else if(eMenuPin==11) MenuString(DualSensor(eMenuPage-2),eMenuSelect==2);
+        else if(eMenuPin==10) MenuInt(Pin[eMenuPage-2].ChokeNote,eMenuSelect==2);
+        else if(eMenuPin==11) MenuInt(DualSensor(eMenuPage-2),eMenuSelect==2);
         #if ENABLE_CHANNEL
-        else if(eMenuPin==12) MenuString(Pin[eMenuPage-2].Channel,eMenuSelect==2);
+        else if(eMenuPin==12) MenuInt(Pin[eMenuPage-2].Channel,eMenuSelect==2);
         #endif
       }
       /*else if(eMenuPage==50)
@@ -502,7 +503,7 @@ void DrawLog(byte x)
    else if(x==1) MenuString(S_HITSOFT,false);
    else if(x==2) MenuString(S_HITHARD,false);
    else if(x==3) MenuString(S_END,false);
-   MenuString(d_tnum,'(',')');
+   MenuInt(d_tnum,'(',')');
    //MenuString(log_Vmax,'(',')');
   /*if(log_state==2) MenuString(log_Nmax,'n',' ');
   else
@@ -584,13 +585,13 @@ void DrawDiagnostic(byte i,byte val)
   lcd.print(val/16);
   
 }
-void MenuString(int inter,bool sel) //sz si puo togliere
+void MenuInt(int inter,bool sel) //sz si puo togliere
 {
-  if(sel) MenuString(inter,'<','>');
-  else MenuString(inter,' ',' ');
+  if(sel) MenuInt(inter,'<','>');
+  else MenuInt(inter,' ',' ');
 }
 
-void MenuString(int inter,char A,char B) //sz si puo togliere
+void MenuInt(int inter,char A,char B) //sz si puo togliere
 {
   if(inter>999) B='e';
   
@@ -599,7 +600,13 @@ void MenuString(int inter,char A,char B) //sz si puo togliere
   cInter[3]+=inter%10;
   cInter[2]+=(inter%100)/10;
   cInter[1]+=(inter%1000)/100;
-  lcd.print(cInter);
+  //lcd.print(cInter);
+  byte i=0;
+  while(i<5)
+  {
+    lcd.print(cInter[i]);
+    ++i;
+  }
 }
 void MenuString(const PROGMEM char *s,bool sel)
 {

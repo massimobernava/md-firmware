@@ -58,6 +58,8 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define S_HHCT50 PSTR("HHC T50")
 #define S_HHCT25 PSTR("HHC T25")
 
+#define S_NSENSOR PSTR("NSENSOR")
+
 #define S_KIT PSTR("Kit")
 #define S_BOXER PSTR("Boxer")
 #define S_FAT_STACKS PSTR("FatStacks")
@@ -228,6 +230,7 @@ void Up()
           else if(eMenuGeneral==4) { HHThresoldSensor[1]=(HHThresoldSensor[1]+1)%128; SaveHHEEPROM(0x05,HHThresoldSensor[1]); }
           else if(eMenuGeneral==5) { HHThresoldSensor[2]=(HHThresoldSensor[2]+1)%128; SaveHHEEPROM(0x06,HHThresoldSensor[2]); }
           else if(eMenuGeneral==6) { HHThresoldSensor[3]=(HHThresoldSensor[3]+1)%128; SaveHHEEPROM(0x07,HHThresoldSensor[3]); }
+          else if(eMenuGeneral==7) { NSensor=(NSensor+1)%6; SaveGeneralEEPROM(0x02); }
         }
         else if(eMenuPage>=2  && eMenuPage<50)//Pin
         {
@@ -315,6 +318,7 @@ void Draw()
           case 4: MenuString(S_HHCT75,eMenuSelect==1); break;
           case 5: MenuString(S_HHCT50,eMenuSelect==1); break;
           case 6: MenuString(S_HHCT25,eMenuSelect==1); break;
+          case 7: MenuString(S_NSENSOR,eMenuSelect==1);break;
         }
       }
       else if(eMenuPage>=2 && eMenuPage<50)
@@ -374,6 +378,7 @@ void Draw()
         else if(eMenuGeneral==4) MenuInt(HHThresoldSensor[1],eMenuSelect==2);
         else if(eMenuGeneral==5) MenuInt(HHThresoldSensor[2],eMenuSelect==2);
         else if(eMenuGeneral==6) MenuInt(HHThresoldSensor[3],eMenuSelect==2);
+        else if(eMenuGeneral==7) MenuInt(NSensor,eMenuSelect==2);
       }
       else if(eMenuPage>=2  && eMenuPage<50)
       {
@@ -462,6 +467,7 @@ void Draw()
           else if(eMenuGeneral==4) { HHThresoldSensor[1]=((HHThresoldSensor[1]-1)>-1)?HHThresoldSensor[1]-1:127; SaveHHEEPROM(0x05,HHThresoldSensor[1]); }
           else if(eMenuGeneral==5) { HHThresoldSensor[2]=((HHThresoldSensor[2]-1)>-1)?HHThresoldSensor[2]-1:127; SaveHHEEPROM(0x06,HHThresoldSensor[2]); }
           else if(eMenuGeneral==6) { HHThresoldSensor[3]=((HHThresoldSensor[3]-1)>-1)?HHThresoldSensor[3]-1:127; SaveHHEEPROM(0x07,HHThresoldSensor[3]); }
+          else if(eMenuGeneral==7) { NSensor=((NSensor-1)>-1)?(NSensor-1):6; SaveGeneralEEPROM(0x02); }
         }
         else if(eMenuPage>=2  && eMenuPage<50)//Pin
         {

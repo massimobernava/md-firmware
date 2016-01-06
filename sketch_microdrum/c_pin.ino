@@ -128,7 +128,9 @@ class pin
     
   }
 
-  //===========SET============
+  //===============================
+  //   SET
+  //===============================
   void set(byte pin)
   {
     Time=TIMEFUNCTION;
@@ -160,7 +162,9 @@ class pin
     
   }
   
-  //===========SCAN============
+  //===============================
+  //   SCAN
+  //===============================
   void scan(byte sensor,byte count)
   {
     byte pin = count+(sensor<<3);
@@ -209,7 +213,8 @@ class pin
         }
         else
         {
-          if(yn_0>=Thresold*10 && yn_1>=Thresold*10 ) State=Normal_Time;
+          if(yn_0>=Thresold*10 && yn_1>=Thresold*10 ) 
+            State=Normal_Time;
         }
       }
     }
@@ -254,7 +259,7 @@ class pin
         }
       }
     
-      yn_0 = 0.5 + ((float)analogRead(sensor)*(float)Gain)/64.0;
+      yn_0 = 0.5 + ((float)ANALOGREAD(sensor,pin)*(float)Gain)/64.0;
     
         
       if(State==Retrigger_Time)
@@ -310,7 +315,9 @@ class pin
     yn_1=yn_0;
   }
   
-  //===========PLAY============
+  //===============================
+  //   PLAY   
+  //===============================
   void play(byte i,pin* dual)
   {
     //===============================
@@ -356,6 +363,9 @@ class pin
 
     }
   }
+  //===============================
+  //   PLAYTOOL
+  //===============================
   void playTOOL(byte i,pin* dual)
   {
     //===============================
@@ -410,6 +420,9 @@ class pin
     }
   }
 
+  //===============================
+  //   PLAYMIDI
+  //===============================
   void playMIDI(byte i,pin* dual)
   {
     //===============================
@@ -571,6 +584,9 @@ class pin
   int MaxReading;
   int yn_1;
 
+  //===============================
+  //   USECURVE
+  //===============================
   byte useCurve()
   {
     int ret=0;
@@ -602,6 +618,9 @@ class pin
     return ret;
   }
 
+  //===============================
+  //   SCANHHC
+  //===============================
   void scanHHC(byte pin,byte sensorReading)
   {
     if ((GlobalTime-Time) > MaskTime)

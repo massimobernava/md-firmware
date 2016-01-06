@@ -15,23 +15,17 @@ int log_Vmax=0;   //Max hit value
 //byte log_oldState=0;
 //short log_Show=0;
 
-/*unsigned long log_T80=0;
-unsigned long log_T70=0;
-unsigned long log_T60=0;*/
 unsigned long log_T50=0;  //Half value hit time
-/*unsigned long log_T40=0;
-unsigned long log_T30=0;
-unsigned long log_T20=0;*/
 
 unsigned long d_hsum=0;  //Sum Tmax
 unsigned long d_tsum=0;  //Sum T50
-unsigned long d_hsum2=0;  //Sum Tmax^2
-unsigned long d_tsum2=0;  //Sum T50^2
+//V2 unsigned long d_hsum2=0;  //Sum Tmax^2
+//V2 unsigned long d_tsum2=0;  //Sum T50^2
 byte d_tnum=0;  //Hit number
-byte d_rmin=0;
+//V2 byte d_rmin=0;
 int d_vmax=0; //Total max hit value
 int d_vmin=1024;  //Total min hit value
-int d_vmean=0;  //Total min hit value
+//V2 int d_vmean=0;  //Total min hit value
 #endif
 //=================================
 
@@ -169,5 +163,31 @@ void blink()
   delay(500);              // wait for a second
   digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
   delay(500);
+}
+
+//==============================
+//    VIRTUALANALOGREAD
+//==============================
+const unsigned long virtualTmax=0;
+const unsigned long virtualVmax=0;
+const unsigned long virtualT50=0;
+
+unsigned long virtualTime=0;
+const unsigned long virtualFreq=1000;
+
+inline int virtualAnalogRead(byte sensor,byte pin)
+{
+  if(pin!=LogPin) return analogRead(sensor);
+  
+  unsigned int T=GlobalTime-virtualTime;
+  
+  if(T>virtualFreq) virtualTime=GlobalTime;
+  else
+  {
+    if(T<virtualTmax) return (T*virtualVmax)/virtualTmax;
+    else if(T<(virtualTmax+(2*virtualT50))) return virtualVmax-(T-virtualTmax)*(virtualVmax/2)/virtualT50;
+  }
+  
+  return 0;
 }
 

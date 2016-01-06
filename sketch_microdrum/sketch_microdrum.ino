@@ -6,7 +6,7 @@
 //=>                                                                          <=
 //=> Massimo Bernava                                                          <=
 //=> massimo.bernava@gmail.com                                                <=
-//=> 2015-12-30                                                               <=
+//=> 2016-01-06                                                               <=
 //==============================================================================
 
 //========CONFIGURE=============
@@ -20,7 +20,7 @@
 #define WT_16             1     // WT_16 = 16 Wav Trigger Input , WT_24 = 24 Wav Trigger Input
 #define ENABLE_CHANNEL    0     // Enable MIDI Channel
 #define MENU_LOG          1     // Enable Auto Tune (only with LCD)
-#define NANO              1     // 1 = nanoDrum , 0 = microDrum
+#define NANO              0     // 1 = nanoDrum , 0 = microDrum
 //==============================
 
 #if defined(__arm__) 
@@ -51,6 +51,7 @@
 #endif
 
 #define TIMEFUNCTION millis() //NOT micros() (thresold error)
+#define ANALOGREAD(s,p) analogRead(s)
 
 #if defined(__arm__) 
   #define fastWrite(_pin_, _state_) digitalWrite(_pin_, _state_);

@@ -31,6 +31,7 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define S_HITHARD PSTR("HIT HARD")
 #define S_WAIT PSTR("WAIT...")
 #define S_END PSTR("END")
+#define S_NOISE PSTR("NOISE..")
 #endif
 
 #if USE_LCD
@@ -58,7 +59,7 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define S_HHCT50 PSTR("HHC T50")
 #define S_HHCT25 PSTR("HHC T25")
 
-#define S_NSENSOR PSTR("NSENSOR")
+#define S_NSENSOR PSTR("Sensor N")
 
 #define S_KIT PSTR("Kit")
 #define S_BOXER PSTR("Boxer")
@@ -213,7 +214,7 @@ void Up()
   else if(eMenuSelect==1)
   {
     if(eMenuPage==0) Mode=(mode)(((int)Mode+1)%4); //MODE
-    else if(eMenuPage==1) eMenuGeneral=(eMenuGeneral+1)%7;//General
+    else if(eMenuPage==1) eMenuGeneral=(eMenuGeneral+1)%8;//General
     else if(eMenuPage>=2 && eMenuPage<50) eMenuPin=(eMenuPin+1)%12;//Pin
     else if(eMenuPage==50) eMenuPage=(eMenuPage+1)%51;//eMenuLog=(eMenuLog+1)%2;//LOG
   }
@@ -450,7 +451,7 @@ void Draw()
   else if(eMenuSelect==1)
       {
         if(eMenuPage==0) Mode=(mode)((int)Mode-1>-1?(int)Mode-1:3); //MODE
-        else if(eMenuPage==1) eMenuGeneral=eMenuGeneral-1>-1?eMenuGeneral-1:6; //General
+        else if(eMenuPage==1) eMenuGeneral=eMenuGeneral-1>-1?eMenuGeneral-1:7; //General
         else if(eMenuPage>=2 && eMenuPage<50) eMenuPin=eMenuPin-1>-1?eMenuPin-1:11; //Pin
         else if(eMenuPage==50) eMenuPage=(eMenuPage-1)>-1?eMenuPage-1:50;//eMenuLog=eMenuLog-1>-1?eMenuLog-1:1;//Log
       }
@@ -505,11 +506,12 @@ void Draw()
 void DrawLog(byte x)
 {
    lcd.setCursor(0,1);
-   if(x==0) MenuString(S_WAIT,false);
-   else if(x==1) MenuString(S_HITSOFT,false);
-   else if(x==2) MenuString(S_HITHARD,false);
+   if(x==0) { MenuString(S_WAIT,false); MenuInt(log_Vmax>>3,'(',')'); }
+   else if(x==1) { MenuString(S_HITSOFT,false);MenuInt(d_tnum,'(',')');}
+   else if(x==2) { MenuString(S_HITHARD,false);MenuInt(d_tnum,'(',')');}
    else if(x==3) MenuString(S_END,false);
-   MenuInt(d_tnum,'(',')');
+   else if(x==4) { MenuString(S_NOISE,false); MenuInt(log_Nmax,'(',')'); }
+   //MenuInt(d_tnum,'(',')');
    //MenuString(log_Vmax,'(',')');
   /*if(log_state==2) MenuString(log_Nmax,'n',' ');
   else

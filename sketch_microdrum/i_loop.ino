@@ -74,10 +74,13 @@ void loop()
     Pin[i].play(i,&Pin[DualSensor(i)]);
   }
   //RESET XTALK
-  for(int i=0;i<NSensor;i++)
+  for(int i=0;i<8;i++)
     MaxMultiplexerXtalk[i]=-1;
   for(int i=0;i<NXtalkGroup;i++)
     MaxXtalkGroup[i]=-1;
+    //RESET XTALK
+  //for(int i=0;i<8;i++)
+   // MaxMultiplexerXtalk[i]=MaxXtalkGroup[i]=-1;
 }
 
 //==============================
@@ -114,7 +117,7 @@ void LogTool(int yn_0,byte MulSensor)
   }
   else if(log_state==1)//FASE 1.b: ANALISI
   {
-    if(yn_0>log_Nmax) log_Nmax=yn_0; //Determiniamo qual'è il massimo valore di input a riposo
+    if(yn_0>log_Nmax) { log_Nmax=yn_0*1.2; DrawLog(4);}//Determiniamo qual'è il massimo valore di input a riposo
     if((log_T1+20000)<TIMEFUNCTION) //20sec
     {
       log_state=2;
@@ -160,7 +163,7 @@ void LogTool(int yn_0,byte MulSensor)
       //N=0;
         
       //if((log_Tmax-log_T1) > d_tmax) d_tmax=(log_Tmax-log_T1);
-      d_hsum+=(log_T50==0?0:log_T50-log_Tmax);
+      d_hsum+=(log_T50==0?0:(log_T50-log_Tmax));
       d_tsum+=(log_Tmax-log_T1);
       //V2 d_hsum2+=(log_T50==0?0:log_T50-log_Tmax)*(log_T50==0?0:log_T50-log_Tmax);
       //V2 d_tsum2+=(log_Tmax-log_T1)*(log_Tmax-log_T1);
@@ -188,7 +191,7 @@ void LogTool(int yn_0,byte MulSensor)
       
       Pin[MulSensor].Gain=(16.0/(float)d_vmin)*64.0;  //V2
       if (Pin[MulSensor].Gain <16) Pin[MulSensor].Gain=16;
-      Pin[MulSensor].Thresold=(d_vmin-log_Nmax)*((float)Pin[MulSensor].Gain/64.0);
+      Pin[MulSensor].Thresold=((float)(d_vmin-log_Nmax))*((float)Pin[MulSensor].Gain/64.0);
       Pin[MulSensor].CurveForm=((32.0*64.0)/(float)Pin[MulSensor].Gain)-1;
         
       log_T1=TIMEFUNCTION;
@@ -213,7 +216,7 @@ void LogTool(int yn_0,byte MulSensor)
       //V2: Pin[MulSensor].Thresold=log_Nmax;
       Pin[MulSensor].ScanTime=((float)d_tsum/25.0);//V2 +(sqrt((25*d_tsum2)-(d_tsum*d_tsum))/25);
       Pin[MulSensor].MaskTime=((float)d_hsum/25.0);//V2+(sqrt((25*d_hsum2)-(d_hsum*d_hsum))/25);
-      Pin[MulSensor].Retrigger= d_vmax*16/((float)d_hsum/25.0); //V2: d_rmin;
+      Pin[MulSensor].Retrigger= (d_vmax*8.0)/((float)d_hsum/25.0); //V2: d_rmin;
       Pin[MulSensor].CurveForm= max(Pin[MulSensor].CurveForm,(1024.0/(float)d_vmax)*32); //Eventuale correzione
       Pin[MulSensor].Curve=Linear;
        

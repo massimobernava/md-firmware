@@ -4,7 +4,6 @@
 //   DUAL SENSOR
 //=================================
 #define DualSensor(i) (_DualSensor[(i)&0x07]+((i)&0xF8))
-//127=Disabled
 const byte _DualSensor[]    = {3,2,1,0,6,7,4,5};
 //=================================
 

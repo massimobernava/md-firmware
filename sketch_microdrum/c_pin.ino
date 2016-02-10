@@ -450,7 +450,10 @@ class pin
         #if USE_WAVTRIGGER
         wavTrigger(i,126);//MaxReadingSensor[i]*18);
         #endif
-           
+        #if USE_PISERIAL
+        piNote(Note,126);
+        #endif
+          
         State=Mask_Time;
         MaxReading = Retrigger;
       }
@@ -505,7 +508,11 @@ class pin
         #if USE_WAVTRIGGER
         wavTrigger(i,v);
         #endif
-          
+        
+        #if USE_PISERIAL
+        piNote(Note,v);
+        #endif
+         
         fastNoteOn(Channel,Note,v);
         
         State=Mask_Time;
@@ -518,7 +525,10 @@ class pin
               #if USE_WAVTRIGGER
               wavTrigger(DualSensor(i),126);
               #endif
-            
+              #if USE_PISERIAL
+              piNote(DualSensor(i),126);
+              #endif
+              
               dual->State=Mask_Time;
          }
          /*

@@ -43,6 +43,7 @@ bool Diagnostic=false;
 //===============================
 //  PRESCALER
 //===============================
+#if defined(__AVR__)
 // Maximum sampling frequency    // Resolution
 enum Prescaler {
   Prescaler_2 = B00000000, // 16 MHz / 2 = 8 MHz            //
@@ -58,6 +59,8 @@ inline void setPrescaler(int prescaler) {
   ADCSRA &= B11111000;
   ADCSRA |= prescaler;
 }
+#endif
+
 //===============================
 
 //==============================

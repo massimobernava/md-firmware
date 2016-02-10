@@ -34,7 +34,11 @@ void setup()
   #if USE_WAVTRIGGER
     mySerial.begin(57600);//31250);
   #endif
-  
+
+  #if USE_PISERIAL
+    mySerial.begin(57600);
+  #endif
+        
   #if defined(__AVR__) 
     analogReference(DEFAULT);
   #endif

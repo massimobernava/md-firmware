@@ -15,7 +15,11 @@ const byte FIXED = 4;
 
 byte kit=BOMBASTIX;
 
-SoftwareSerial mySerial(6, 5); // RX, TX
+#if defined(__arm__) 
+  #define mySerial Serial2
+#elif defined(__AVR__) 
+  SoftwareSerial mySerial(6, 5); // RX, TX
+#endif
 
 /*
 A1 Snare         6/4

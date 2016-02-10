@@ -6,7 +6,7 @@
 //=>                                                                          <=
 //=> Massimo Bernava                                                          <=
 //=> massimo.bernava@gmail.com                                                <=
-//=> 2016-01-07                                                               <=
+//=> 2016-02-10                                                               <=
 //==============================================================================
 
 //========CONFIGURE=============
@@ -14,10 +14,11 @@
 #define USE_595           1     // 1 with nanoDrum and v0.8
 #define USE_PROFILER      0     // Use Profiler (only for Debug)
 #define FASTADC           1     // FASTADC = Prescaler_16, VERYFASTADC = Prescaler_8, VERYVERYFASTADC = Prescaler_4
-#define SERIALSPEED       1     // 1 = 115200, 0 = 31250 (MIDI) , picoMIDI use 115200 therefore with nanoDrum and v0.8 use 1
+#define SERIALSPEED       0     // 1 = 115200, 0 = 31250 (MIDI) , picoMIDI use 115200 therefore with nanoDrum and v0.8 use 1
 #define USE_DEFAULT_NAME  1     // Use Default Name for pin in LCD Menu
-#define USE_WAVTRIGGER    1     // Use WavTrigger
-#define WT_16             1     // WT_16 = 16 Wav Trigger Input , WT_24 = 24 Wav Trigger Input
+#define USE_PISERIAL      1     // Use Raspberry Pi serial
+#define USE_WAVTRIGGER    0     // Use WavTrigger
+#define WT_16             0     // WT_16 = 16 Wav Trigger Input , WT_24 = 24 Wav Trigger Input
 #define ENABLE_CHANNEL    0     // Enable MIDI Channel
 #define MENU_LOG          1     // Enable Auto Tune (only with LCD)
 #define NANO              1     // 1 = nanoDrum , 0 = microDrum
@@ -29,8 +30,13 @@
   #include <EEPROM.h>
 #endif
 
+#if defined(__AVR__) 
 #if USE_WAVTRIGGER
   #include <SoftwareSerial.h>
+#endif
+#if USE_PISERIAL
+  #include <SoftwareSerial.h>
+#endif
 #endif
 //#include <math.h>
 

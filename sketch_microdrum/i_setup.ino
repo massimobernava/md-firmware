@@ -4,8 +4,10 @@
 //==============================
 void setup()
 {
+  #if TEENSY
   HWSERIAL.begin(31250);
-
+  #endif
+  
   #if SERIALSPEED
     Serial.begin(115200);    //Serial
   #else
@@ -19,14 +21,14 @@ void setup()
   synth.setChannelVolume(fluxCHANNEL, 127); // max. channel volume
   synth.setMasterVolume(255);  // max. master volume
   #endif
-
+  
 //------------------------------------
-//    MULTIPLEX RETIRADO SE MEGA
+//    MULTIPLEX RETIRADO SE NO_MUX
 //------------------------------------ 
 
-#if MEGA
+#if TEENSY
 #if USE_DIG
-//Ativa os pinos digitais
+//Initializing digital pins
  pinMode(Choke1_Pin, INPUT_PULLUP);
  pinMode(Choke2_Pin, INPUT_PULLUP);
  pinMode(Choke3_Pin, INPUT_PULLUP);
@@ -58,21 +60,19 @@ Serial.print("Multiplexer on.");
     //MaxRetriggerSensor[count]=0;//0xFF;
   }
   
-  #if TEENSY
   pinMode(LEDpin,OUTPUT);
-  #endif
   
   #if USE_LCD
-  #if MEGA
-    pinMode(3, INPUT_PULLUP);   //No VCC needed, only signal and GND
-    pinMode(2, INPUT_PULLUP);   //No VCC needed, only signal and GND
+  #if NO_MUX
+    pinMode(3, INPUT_PULLUP);   //For buttons. No VCC needed, only signal and GND
+    pinMode(2, INPUT_PULLUP);   //For buttons. No VCC needed, only signal and GND
   #elif ENCODER
     pinMode (encoder0PinA,INPUT);
     pinMode (encoder0PinB,INPUT);
-    pinMode (encoder0Btn1,INPUT_PULLUP);
+    pinMode (encoder0Btn1,INPUT);
   #else
-    pinMode(6, INPUT_PULLUP);   //No VCC needed, only signal and GND
-    pinMode(5, INPUT_PULLUP);   //No VCC needed, only signal and GND
+    pinMode(6, INPUT_PULLUP);   //For buttons. No VCC needed, only signal and GND
+    pinMode(5, INPUT_PULLUP);   //For buttons. No VCC needed, only signal and GND
   #endif
   #endif
 
@@ -113,7 +113,7 @@ Serial.print("Multiplexer on.");
     #if USE_I2C_LCD
       lcd.init(); // initialize the lcd
       lcd.backlight();
-      lcd.noBacklight();
+      lcd.noAutoscroll();
     #elif USE_595
       lcd.setLED2Pin(HIGH);
       lcd.begin(16, 2);
@@ -125,26 +125,28 @@ Serial.print("Multiplexer on.");
 
     #if NANO
       MenuString(PSTR("nanoDRUM v1.4"),false);
-    #elif MEGA
+    #elif NO_MUX
       {
         //lcd.clear();
         //lcd.setCursor(0,1);
         //lcd.print("microDrum");
-        MenuString(PSTR("TeensyMegaDRUM  v1.4"),false);
+        MenuString(PSTR("NO_MUXDRUM  v1.4"),false);
         }
+    #elif TEENSY
+      MenuString(PSTR("TeensyDRUM v1.4"),false);   
     #else
       MenuString(PSTR("microDRUM v1.4"),false);
     #endif
   #endif
 
-  #if MEGA
+  #if NO_MUX
   //
   #else
     fastWrite(3,0);fastWrite(4,0);
   #endif
 
   #if USE_LCD
-  #if MEGA
+  #if NO_MUX
     /*lcd.createChar(0, lcdSnare);
     lcd.createChar(1, lcdTom);
     lcd.createChar(2, lcdCymball);

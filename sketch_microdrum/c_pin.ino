@@ -57,13 +57,11 @@ enum state:byte
 //===========================
 
 //--------------------------------------------
-//   DEFINIR MEGA em sketch_microdrum.ino
+//   DEFINIR NO_MUX em sketch_microdrum.ino
 //   para usar 16 pinos sem multiplex
 //--------------------------------------------
 
-#if MEGA
-
-//*** Compat�vel com Megadrum
+#if NO_MUX
 
 const byte DP_HHC       = 0x00;
 const byte DP_SNAREHEAD = 0x01;
@@ -131,7 +129,7 @@ class pin
     Gain=20;
     
     #if ENABLE_CHANNEL
-    Channel = 10; if (Channel>=15) {Channel = 0;}
+    Channel = 9;
     #endif
     
     Thresold=30;
@@ -156,7 +154,7 @@ class pin
   {
     Time=TIMEFUNCTION;
     this->Time=Time+this->MaskTime;
-//    #if MEGA
+//    #if NO_MUX
 //    this->_pin=pin;
 //    #endif
     
@@ -213,10 +211,12 @@ class pin
     //===============================
     //        HHC
     //===============================
-//    #if MEGA
+//    #if NO_MUX
 //    if(Type==HHC) { scanHHC(_pin,analogRead(_pin)/8); return; }
 //    #else
-      analogReadAveraging(2);
+  #if TEENSY  
+  analogReadAveraging(2); 
+  #endif
     if(Type==HHC) { scanHHC(pin,analogRead(sensor)/8); return; }
 //    #endif
     
@@ -225,10 +225,12 @@ class pin
     //===============================
     if(Type==Switch)
     {
-//      #if MEGA
+//      #if NO_MUX
 //      yn_0 = analogRead(_pin);
 //      #else
+      #if TEENSY
       analogReadAveraging(2);
+      #endif
       yn_0 =  analogRead(sensor);
 //      #endif
       
@@ -273,7 +275,9 @@ class pin
     //===============================
     else if(Type==YSwitch)
     { 
+      #if TEENSY
       analogReadAveraging(2);
+      #endif
       yn_0 = analogRead(sensor);
       
       if(yn_0<Thresold*4 )
@@ -309,7 +313,7 @@ class pin
           Time = GlobalTime;
         }
       }
-//      #if MEGA
+//      #if NO_MUX
 //      yn_0 = 0.5 + ((float)analogRead(sensor)*(float)Gain)/64.0;
 //      #else   
       yn_0 = 0.5 + ((float)ANALOGREAD(sensor,pin)*(float)Gain)/64.0;
@@ -596,7 +600,7 @@ class pin
         
         #if SAM2695
         //if(Channel==10){
-        Serial.println("sent to SAM!")
+        Serial.println("sent to SAM!");
         synth.noteOn(fluxCHANNEL, Note, v);      // play a note
         synth.noteOff(fluxCHANNEL, Note);         // send note off
         /*}
@@ -676,7 +680,7 @@ class pin
   };
   
   #if ENABLE_CHANNEL
-  byte Channel=10;
+  byte Channel=9;
   #endif
 
   byte Thresold;

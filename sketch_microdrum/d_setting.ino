@@ -339,6 +339,7 @@ void ExecCommand(int Cmd,int Data1,int Data2,int Data3)
 //==============================
 void Input()
 {
+  #if TEENSY
       //===HANDSHAKE======
       if(usbMIDI.read() && usbMIDI.getType() == 7)
       //===HANDSHAKE======
@@ -376,4 +377,22 @@ void Input()
     ExecCommand(Cmd,Data1,Data2,Data3);
   }
 }
+#else
+ //===HANDSHAKE======
+  while(Serial.peek()>=0 && Serial.peek()!=0xF0) Serial.read();
+  //===HANDSHAKE======
+  
+  if (Serial.available() > 6)
+  {
+    byte Start=Serial.read();
+    byte ID=Serial.read(); 
+    int Cmd=Serial.read();
+    int Data1=Serial.read();
+    int Data2=Serial.read();
+    int Data3=Serial.read();
+    byte End=Serial.read();
+    
+    ExecCommand(Cmd,Data1,Data2,Data3);
+  }
+  #endif
 }

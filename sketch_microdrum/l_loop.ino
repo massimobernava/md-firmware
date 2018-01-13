@@ -11,20 +11,20 @@ void loop()
 {
   //simpleSysex(0xFF,Mode,0x00,0x00);
   Input();
+
   #if USE_LCD
-  Menu();
+      Menu(); 
   #endif
-  
-  if(Mode==Off)
+
+if(Mode==Off)
   {
     delay(100);
     return;
   }
 
 //---------------------------------------------------------------------------------------
-//      LÊ OS 16 PINOS ANALOGICOS DO ARDUINO MEGA SEM MULTIPLEX E PINOS DIGITAIS
+//      LÊ OS 16 PINOS ANALOGICOS DO ARDUINO NO_MUX SEM MULTIPLEX E PINOS DIGITAIS
 //---------------------------------------------------------------------------------------
-#if MEGA
  // --- Uso dos Pinos Digitais para choke e padas adicionais ---
  #if USE_DIG 
   // Lê os pinos digitais
@@ -111,7 +111,6 @@ void loop()
   // AUX 7
   currentSwitchState = digitalRead(Aux7_Pin); if( currentSwitchState == LOW && Aux7_State == HIGH ) /*push*/ MIDI_TX(0x90 | 144,  Aux7, 127);
   if( currentSwitchState == HIGH && Aux7_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux7, 127); Aux7_State = currentSwitchState;
-#endif
 #endif
 // --- Lê os pinos analógicos
 
@@ -394,6 +393,3 @@ void LogTool(int yn_0,byte MulSensor)
     SendLog(MulSensor,N,yn_0,Pin[MulSensor].useCurve(),Pin[MulSensor].MaxReading,Pin[MulSensor].State);
   #endif  
 }
-
-
-

@@ -1,0 +1,44 @@
+
+There are many hardware options available, almost all completely configurable to suit specific needs. 
+The minamal pinout is as follows:
+
+0 - RX
+1 - TX
+2 - MUX
+3 - MUX 
+4 - MUX
+A0 - Analog Input 0
+A1 - Analog Input 1
+A2 - Analog Input 2
+A3 - Analog Input 3
+A4 - Analog Input 4
+A5 - Analog Input 5
+
+==========================================================================================================
+
+There are currently 3 LCD options, and use either 2 pushbuttons, or a rotary encoder and a pushbutton
+
+  standard LCD uses pins:  5, 6, 7, 8, 9, 10
+
+  standard LCD with 595 shift register uses pins:  10, 12, 13
+
+  I2C display uses pins (can't be changed):  29 (SCL1), 30 (SDA1)
+
+The pushbuttons are set to pins 11 and 12 for standard LCD, 5 and 6 for LCD & 595 shift register. The encoder uses pins: 5, 6, 7
+
+==========================================================================================================
+
+NANO sets the number of pins(NPin) to 24, while putting it to 0 sets(NPin) to 48.
+
+==========================================================================================================
+
+The MEGA setting disables the multiplexers and uses analog 0-9.
+USE_DIG can only be used while MEGA is enabled. It allows for digital pins to be used as chokes. These pins need to be configured by the user.
+
+==========================================================================================================
+
+DEBUG sends serial data to help troubleshooting.
+
+==========================================================================================================
+
+The TEENSY setting has general Teensy specific code.

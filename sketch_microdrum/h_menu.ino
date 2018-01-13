@@ -339,6 +339,7 @@ void Up()
           else if(eMenuGeneral==5) { HHThresoldSensor[2]=(HHThresoldSensor[2]+1)%128; SaveHHEEPROM(0x06,HHThresoldSensor[2]); }
           else if(eMenuGeneral==6) { HHThresoldSensor[3]=(HHThresoldSensor[3]+1)%128; SaveHHEEPROM(0x07,HHThresoldSensor[3]); }
           else if(eMenuGeneral==7) { NSensor=(NSensor+1)%6; SaveGeneralEEPROM(0x02); }
+          //else if(eMenuGeneral==8) { Soundbank = (Soundbank + 1)%10;}
         }
         else if(eMenuPage>=2  && eMenuPage<50)//Pin
         {
@@ -378,7 +379,7 @@ void Up()
 void Draw()
 {
   lcd.clear();
-  lcd.noAutoscroll();
+  //lcd.noAutoscroll();
   
   Diagnostic=false;
   
@@ -578,6 +579,7 @@ void Draw()
           else if(eMenuGeneral==5) { HHThresoldSensor[2]=((HHThresoldSensor[2]-1)>-1)?HHThresoldSensor[2]-1:127; SaveHHEEPROM(0x06,HHThresoldSensor[2]); }
           else if(eMenuGeneral==6) { HHThresoldSensor[3]=((HHThresoldSensor[3]-1)>-1)?HHThresoldSensor[3]-1:127; SaveHHEEPROM(0x07,HHThresoldSensor[3]); }
           else if(eMenuGeneral==7) { NSensor=((NSensor-1)>-1)?(NSensor-1):6; SaveGeneralEEPROM(0x02); }
+          //else if(eMenuGeneral==8) { Soundbank = (Soundbank -1)%10;}
         }
         else if(eMenuPage>=2  && eMenuPage<50)//Pin
         {
@@ -682,7 +684,7 @@ void DefaultPrintName(byte pin,bool sel)
     case DP_CRASH2BOW: MenuString(S_CRASH2BOW,sel); break;
     case DP_CRASH2EDGE: MenuString(S_CRASH2EDGE,sel); break;
     
-    #if MEGA
+    #if NO_MUX
     case DP_EXTRA1: MenuString(S_EXTRA1,sel); break;
     case DP_EXTRA2: MenuString(S_EXTRA2,sel); break;
     #else
@@ -698,7 +700,7 @@ void DefaultPrintName(byte pin,bool sel)
     case DP_TOM3HEAD: MenuString(S_TOM3HEAD,sel); break;
     case DP_TOM4HEAD: MenuString(S_TOM4HEAD,sel); break;
 
-    #if MEGA
+    #if NO_MUX
     case DP_CHINA: MenuString(S_CHINA,sel); break;
     case DP_SPLASH: MenuString(S_SPLASH,sel); break;
     #else

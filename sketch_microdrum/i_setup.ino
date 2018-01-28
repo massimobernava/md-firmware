@@ -26,29 +26,12 @@ void setup()
 //    MULTIPLEX RETIRADO SE NO_MUX
 //------------------------------------ 
 
-#if TEENSY
-#if USE_DIG
-//Initializing digital pins
+ #if USE_DIG
+ //Initializing digital pins. Pullup not necessary, but is simpler. Not sure if long cables effect it or not.
  pinMode(Choke1_Pin, INPUT_PULLUP);
- pinMode(Choke2_Pin, INPUT_PULLUP);
- pinMode(Choke3_Pin, INPUT_PULLUP);
- pinMode(ChokeRide_Pin, INPUT_PULLUP);
  pinMode(Aux1_Pin, INPUT_PULLUP);
- pinMode(Aux2_Pin, INPUT_PULLUP);
- pinMode(Aux3_Pin, INPUT_PULLUP);
- pinMode(Aux4_Pin, INPUT_PULLUP);
- pinMode(Aux5_Pin, INPUT_PULLUP);
- pinMode(Aux6_Pin, INPUT_PULLUP);
- pinMode(Aux7_Pin, INPUT_PULLUP);
  #endif
-#else
-  pinMode(2, OUTPUT);    // s0
-  pinMode(3, OUTPUT);    // s1
-  pinMode(4, OUTPUT);    // s2
-  #if DEBUG
-Serial.print("Multiplexer on.");
-  #endif
-#endif
+ 
 //------------------------------------
 
   GlobalTime=TIMEFUNCTION;
@@ -106,7 +89,6 @@ Serial.print("Multiplexer on.");
 
   #elif defined(__arm__) 
 //  REG_ADC_MR = (REG_ADC_MR & 0xFFF0FFFF) | 0x00030000; //0x00020000;
-    //analogReference(DEFAULT);   might be changed in the future
   #endif
 
   #if USE_LCD
@@ -125,36 +107,24 @@ Serial.print("Multiplexer on.");
 
     #if NANO
       MenuString(PSTR("nanoDRUM v1.4"),false);
-    #elif NO_MUX
-      {
-        //lcd.clear();
-        //lcd.setCursor(0,1);
-        //lcd.print("microDrum");
-        MenuString(PSTR("NO_MUXDRUM  v1.4"),false);
-        }
-    #elif TEENSY
-      MenuString(PSTR("TeensyDRUM v1.4"),false);   
     #else
       MenuString(PSTR("microDRUM v1.4"),false);
     #endif
   #endif
 
   #if NO_MUX
-  //
+  // Do a backflip or something
   #else
+    pinMode(2, OUTPUT);    // s0
+    pinMode(3, OUTPUT);    // s1
+    pinMode(4, OUTPUT);    // s2
+
+      #if DEBUG
+      Serial.print("Multiplexer on.");
+      #endif
+      
     fastWrite(3,0);fastWrite(4,0);
   #endif
 
-  #if USE_LCD
-  #if NO_MUX
-    /*lcd.createChar(0, lcdSnare);
-    lcd.createChar(1, lcdTom);
-    lcd.createChar(2, lcdCymball);
-    lcd.createChar(3, lcdHH);
-    lcd.createChar(4, lcdKick);*/
-    #endif
-  #endif
-
   blink();  blink();  blink();
-
 }

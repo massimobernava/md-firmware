@@ -27,93 +27,32 @@ if(Mode==Off)
 //---------------------------------------------------------------------------------------
  // --- Uso dos Pinos Digitais para choke e padas adicionais ---
  #if USE_DIG 
-  // Lê os pinos digitais
+  // For digital chokes
+  // Again, these are examples. Copy the "update", and "falling/rising-edge" lines and add the names of new pins to add your own.
   #if TEENSY
   Choke_A.update();
-  Choke_B.update();
-  Choke_C.update();
-  Choke_R.update();
   AUX_A.update();
-  AUX_B.update();
-  AUX_C.update();
-  AUX_D.update();
-  AUX_E.update();
-  AUX_F.update();
-  AUX_G.update();
 
     if (Choke_A.fallingEdge()) {usbMIDI.sendNoteOn(Choke1, 127, (0x90 | 144));}
-    if (Choke_B.fallingEdge()) {usbMIDI.sendNoteOn(Choke2, 127, (0x90 | 144));}
-    if (Choke_C.fallingEdge()) {usbMIDI.sendNoteOn(Choke3, 127, (0x90 | 144));}
-    if (Choke_R.fallingEdge()) {usbMIDI.sendNoteOn(ChokeRide, 127, (0x90 | 144));}
     if (AUX_A.fallingEdge()) {usbMIDI.sendNoteOn(Aux1, 127, (0x90 | 144));}
-    if (AUX_B.fallingEdge()) {usbMIDI.sendNoteOn(Aux2, 127, (0x90 | 144));}
-    if (AUX_C.fallingEdge()) {usbMIDI.sendNoteOn(Aux3, 127, (0x90 | 144));}
-    if (AUX_D.fallingEdge()) {usbMIDI.sendNoteOn(Aux4, 127, (0x90 | 144));}
-    if (AUX_E.fallingEdge()) {usbMIDI.sendNoteOn(Aux5, 127, (0x90 | 144));}
-    if (AUX_F.fallingEdge()) {usbMIDI.sendNoteOn(Aux6, 127, (0x90 | 144));}
-    if (AUX_G.fallingEdge()) {usbMIDI.sendNoteOn(Aux7, 127, (0x90 | 144));}
 
     if (Choke_A.risingEdge()) {usbMIDI.sendNoteOff(Choke1, 0, (0x90 | 128));}
-    if (Choke_B.risingEdge()) {usbMIDI.sendNoteOff(Choke2, 0, (0x90 | 128));}
-    if (Choke_C.risingEdge()) {usbMIDI.sendNoteOff(Choke3, 0, (0x90 | 128));}
-    if (Choke_R.risingEdge()) {usbMIDI.sendNoteOff(ChokeRide, 0, (0x90 | 128));}
     if (AUX_A.risingEdge()) {usbMIDI.sendNoteOff(Aux1, 0, (0x90 | 128));}
-    if (AUX_B.risingEdge()) {usbMIDI.sendNoteOff(Aux2, 0, (0x90 | 128));}
-    if (AUX_C.risingEdge()) {usbMIDI.sendNoteOff(Aux3, 0, (0x90 | 128));}
-    if (AUX_D.risingEdge()) {usbMIDI.sendNoteOff(Aux4, 0, (0x90 | 128));}
-    if (AUX_E.risingEdge()) {usbMIDI.sendNoteOff(Aux5, 0, (0x90 | 128));}
-    if (AUX_F.risingEdge()) {usbMIDI.sendNoteOff(Aux6, 0, (0x90 | 128));}
-    if (AUX_G.risingEdge()) {usbMIDI.sendNoteOff(Aux7, 0, (0x90 | 128));}
     
   #else
-  
+
   // CHOKE PRATO 01
   currentSwitchState = digitalRead(Choke1_Pin);   if( currentSwitchState == LOW && Choke1_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Choke1, 127);
   if( currentSwitchState == HIGH && Choke1_Pin == LOW ) /*release*/ MIDI_TX(0x90 | 128, Choke1, 127); Choke1_State = currentSwitchState;
-  
-  // CHOKE PRATO 02
-  currentSwitchState = digitalRead(Choke2_Pin);   if( currentSwitchState == LOW && Choke2_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Choke2, 127);
-  if( currentSwitchState == HIGH && Choke2_Pin == LOW ) /*release*/ MIDI_TX(0x90 | 128, Choke2, 127); Choke2_State = currentSwitchState;
-  
-  // CHOKE PRATO 03
-  currentSwitchState = digitalRead(Choke3_Pin);   if( currentSwitchState == LOW && Choke3_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Choke3, 127);
-  if( currentSwitchState == HIGH && Choke3_Pin == LOW ) /*release*/ MIDI_TX(0x90 | 128, Choke3, 127); Choke3_State = currentSwitchState;
-  
-  // CHOKE RIDE
-    currentSwitchState = digitalRead(ChokeRide_Pin);   if( currentSwitchState == LOW && ChokeRide_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  ChokeRide, 127);
-  if( currentSwitchState == HIGH && ChokeRide_Pin == LOW ) /*release*/ MIDI_TX(0x90 | 128, ChokeRide, 127); ChokeRide_State = currentSwitchState;
-  
   // AUX 1
   currentSwitchState = digitalRead(Aux1_Pin);   if( currentSwitchState == LOW && Aux1_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Aux1, 127);
   if( currentSwitchState == HIGH && Aux1_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux1, 127); Aux1_State = currentSwitchState;
-  
-  // AUX 2
-  currentSwitchState = digitalRead(Aux2_Pin);   if( currentSwitchState == LOW && Aux2_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Aux2, 127);
-  if( currentSwitchState == HIGH && Aux2_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux2, 127); Aux2_State = currentSwitchState;
 
-  // AUX 3
-  currentSwitchState = digitalRead(Aux3_Pin);   if( currentSwitchState == LOW && Aux3_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Aux3, 127);
-  if( currentSwitchState == HIGH && Aux3_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux3, 127); Aux3_State = currentSwitchState;
-  Aux3_State = currentSwitchState;
-
-  // AUX 4
-  currentSwitchState = digitalRead(Aux4_Pin);   if( currentSwitchState == LOW && Aux4_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Aux4, 127);
-  if( currentSwitchState == HIGH && Aux4_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux4, 127); Aux4_State = currentSwitchState;
-
-  // AUX 5
-  currentSwitchState = digitalRead(Aux5_Pin);   if( currentSwitchState == LOW && Aux5_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Aux5, 127);
-  if( currentSwitchState == HIGH && Aux5_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux5, 127); Aux5_State = currentSwitchState;
-  
-  // AUX 6
-  currentSwitchState = digitalRead(Aux6_Pin);   if( currentSwitchState == LOW && Aux6_State == HIGH )/*push*/MIDI_TX(0x90 | 144,  Aux6, 127);
-  if( currentSwitchState == HIGH && Aux6_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux6, 127); Aux6_State = currentSwitchState;
-    
-  // AUX 7
-  currentSwitchState = digitalRead(Aux7_Pin); if( currentSwitchState == LOW && Aux7_State == HIGH ) /*push*/ MIDI_TX(0x90 | 144,  Aux7, 127);
-  if( currentSwitchState == HIGH && Aux7_State == LOW ) /*release*/ MIDI_TX(0x90 | 128, Aux7, 127); Aux7_State = currentSwitchState;
 #endif
-// --- Lê os pinos analógicos
+#endif
 
+  #if NO_MUX  // --- For analog pins, not using multiplexer.
+  
   for(byte Sensor=0;Sensor<NPin;Sensor++)
   {
     if(Sensor != (10 || 11)); // comment out
@@ -129,27 +68,10 @@ if(Mode==Off)
       }
    }
    Pin[Sensor].play(Sensor,&Pin[DualSensor(Sensor)]);
-   #if USE_LCD
-      /*if (Pin[Sensor].State == Scan_Time)  
-      {
-        lcd.setCursor(Sensor, 1);
-        lcd.print((char) spChar[Sensor]);
-        tmChar[Sensor] = millis(); 
-      }
-      if (Pin[Sensor].State == Normal_Time)
-      {
-        if ((millis() - tmChar[Sensor]) > 1000)
-        {
-          lcd.setCursor(Sensor,1);
-          lcd.print(' ');
-        }
-      }*/
     }
   }
    #endif
   
-#else
-
   // --- Lê os multiplex / Microdrum original
    
   //==========UNROLLING======
@@ -205,7 +127,7 @@ if(Mode==Off)
   {
     Pin[i].play(i,&Pin[DualSensor(i)]);
   }
-#endif
+
   //RESET XTALK
   for(int i=0;i<8;i++)
     MaxMultiplexerXtalk[i]=-1;
@@ -393,3 +315,5 @@ void LogTool(int yn_0,byte MulSensor)
     SendLog(MulSensor,N,yn_0,Pin[MulSensor].useCurve(),Pin[MulSensor].MaxReading,Pin[MulSensor].State);
   #endif  
 }
+
+

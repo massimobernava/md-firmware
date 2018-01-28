@@ -3,6 +3,24 @@
 //    MIDI
 //==============================
 
+#if TEENSY
+#if ENABLE_CHANNEL
+  #define fastNoteOn(_channel,_note,_velocity) { usbMIDI.sendNoteOn(_note, _velocity, 0x90 | _channel);          usbMIDI.sendNoteOff(_note, _velocity, 0x90 | _channel);   HWSERIAL.write(0x90 | _channel);  HWSERIAL.write(_note); HWSERIAL.write(_velocity); /*note off*/ HWSERIAL.write(0x90 | _channel);  HWSERIAL.write(_note); HWSERIAL.write(0);       /*Serial.println(String("Note On:  ch=") + _channel + ", note=" + _note + ", velocity=" + _velocity); Serial.println();*/}
+  #define fastMidiCC(_channel,_number,_value) {  usbMIDI.sendControlChange(_number, _value, (_channel));                                                                   HWSERIAL.write((0xB0 | _channel)); HWSERIAL.write(_number); HWSERIAL.write(_value);  /*Serial.println(String("Note On:  ch=") + _channel + ", note=" + _number + ", value=" + _value);Serial.println();*/}
+#else
+  #define fastNoteOn(_channel,_note,_velocity) { usbMIDI.sendNoteOn(_note, _velocity, 0x90 | 0x09);              usbMIDI.sendNoteOff(_note, _velocity, 0x90 | 0x09);       HWSERIAL.write(0x90 | 0x09); HWSERIAL.write(_note); HWSERIAL.write(_velocity);       /*Serial.println("channel---note---velocity "); Serial.print(0x90 | _channel); Serial.print(_note); Serial.println(_velocity); Serial.println();*/}
+  #define fastMidiCC(_channel,_number,_value) {  usbMIDI.sendControlChange(_number, _value, (0xB0 | 0x09));                                                                HWSERIAL.write((0xB0 | 0x09)); HWSERIAL.write(_number); HWSERIAL.write(_value); }
+#endif
+#else
+#if ENABLE_CHANNEL
+  #define fastNoteOn(_channel,_note,_velocity) { Serial.write(0x90 | _channel);Serial.write(_note);Serial.write(_velocity); }
+  #define fastMidiCC(_channel,_number,_value) { Serial.write((0xB0 | _channel)); Serial.write(_number); Serial.write(_value); }
+#else
+  #define fastNoteOn(_channel,_note,_velocity) { Serial.write(0x90 | 0x09); Serial.write(_note); Serial.write(_velocity);}
+  #define fastMidiCC(_channel,_number,_value) { Serial.write((0xB0 | 0x09)); Serial.write(_number); Serial.write(_value); }
+#endif
+#endif
+
 //=============SYSEX=========
 void simpleSysex(byte cmd,byte data1,byte data2,byte data3)
 {

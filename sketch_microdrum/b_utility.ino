@@ -41,6 +41,32 @@ short N=0;//Unsent log
 bool Diagnostic=false;
 //===============================
 
+// defines for setting and clearing register bits
+#ifndef cbi
+#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+#endif
+#ifndef sbi
+#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+#endif
+
+#define TIMEFUNCTION millis() //NOT micros() (thresold error)
+#define ANALOGREAD(s,p) analogRead(s)
+
+#if defined(__arm__) 
+  #define fastWrite(_pin_, _state_) digitalWrite(_pin_, _state_);
+#elif defined(__AVR__) 
+//#define fastWrite(_pin_, _state_) ( _pin_ < 8 ? (_state_ ?  PORTD |= 1 << _pin_ : PORTD &= ~(1 << _pin_ )) : (_state_ ?  PORTB |= 1 << (_pin_ -8) : PORTB &= ~(1 << (_pin_ -8)  )))
+  #define fastWrite(_pin_, _state_) (_state_ ?  PORTD |= 1 << _pin_ : PORTD &= ~(1 << _pin_ ))
+#endif
+
+#if TEENSY
+#if defined(__MK20DX256__)
+#define RESTART_ADDR       0xE000ED0C
+#define READ_RESTART()     (*(volatile uint32_t *)RESTART_ADDR)
+#define WRITE_RESTART(val) ((*(volatile uint32_t *)RESTART_ADDR) = (val))
+#endif
+#endif
+
 //===============================
 //  PRESCALER
 //===============================
@@ -144,7 +170,7 @@ void SendProfiling()
 void softReset() {
   #if defined(__AVR__)
   asm volatile (" jmp 0");
-  #elif defined(__MK20DX256__)
+  #elif TEENSY//defined(__MK20DX256__)
   WRITE_RESTART(0x5FA0004);
   #endif
 //wdt_enable(WDTO_30MS);
@@ -163,6 +189,8 @@ int freeRam () {
 //==============================
 //    BLINK
 //==============================
+int LEDpin = 13;
+
 void blink()
 {
   digitalWrite(LEDpin, HIGH);   // turn the LED on (HIGH is the voltage level)
@@ -183,7 +211,9 @@ const unsigned long virtualFreq=1000;
 
 inline int virtualAnalogRead(byte sensor,byte pin)
 {
+  #if TEENSY
   analogReadAveraging(2);
+  #endif
   if(pin!=LogPin) return analogRead(sensor);
   
   unsigned int T=GlobalTime-virtualTime;
@@ -197,4 +227,3 @@ inline int virtualAnalogRead(byte sensor,byte pin)
   
   return 0;
 }
-
